@@ -15,10 +15,13 @@ public class FavoriteProvider extends BaseEntity {
     @Column(name = "favorite_provider_id")
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_profile_id", nullable = false)
-    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_profile_id")
     private ClientProfile clientProfile;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "senior_profile_id")
+    private SeniorProfile seniorProfile;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_profile_id", nullable = false)
