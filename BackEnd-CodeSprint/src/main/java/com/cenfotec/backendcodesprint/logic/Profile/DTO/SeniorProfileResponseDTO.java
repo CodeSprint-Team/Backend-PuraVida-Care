@@ -21,6 +21,7 @@ public class SeniorProfileResponseDTO {
     // ── Familiar responsable ──────────────────────────────────────
     private String familyMember;
     private String familyRelation;
+    private String familyPhone;
 
     // ── Contacto de emergencia ────────────────────────────────────
     private String emergencyContactName;

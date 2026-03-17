@@ -11,7 +11,6 @@ public class ClientProfileUpdateDTO {
     @NotBlank
     private String username;
 
-    @NotBlank
     private String lastname;
 
     @Email @NotBlank

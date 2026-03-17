@@ -10,18 +10,20 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ProfileService {
 
-    private final SeniorProfileRepository    seniorRepo;
-    private final ClientProfileRepository    clientRepo;
-    private final ProviderProfileRepository  providerRepo;
-    private final FavoriteProviderRepository favoriteRepo;
-    private final CareServiceRepository      careServiceRepo;
-    private final ReviewRepository           reviewRepo;
+    private final SeniorProfileRepository      seniorRepo;
+    private final ClientProfileRepository      clientRepo;
+    private final ProviderProfileRepository    providerRepo;
+    private final FavoriteProviderRepository   favoriteRepo;
+    private final CareServiceRepository        careServiceRepo;
+    private final ReviewRepository             reviewRepo;
+    private final CareRelationshipRepository   careRelRepo;
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new Locale("es", "CR"));
@@ -33,7 +35,9 @@ public class ProfileService {
     public SeniorProfileResponseDTO getSeniorProfile(Long id) {
         SeniorProfile p = seniorRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Senior profile not found: " + id));
-        return mapToSeniorResponse(p, favoriteRepo.findBySeniorProfile_Id(id));
+        List<FavoriteProvider> favorites = favoriteRepo.findBySeniorProfile_Id(id);
+        Optional<CareRelationship> primaryRelation = careRelRepo.findBySeniorIdAndIsPrimary(id, true);
+        return mapToSeniorResponse(p, favorites, primaryRelation.orElse(null));
     }
 
     @Transactional
@@ -56,7 +60,10 @@ public class ProfileService {
         p.setHealthObservation(dto.getHealthObservation());
         p.setAllergies(dto.getAllergies());
 
-        return mapToSeniorResponse(seniorRepo.save(p), favoriteRepo.findBySeniorProfile_Id(id));
+        SeniorProfile saved = seniorRepo.save(p);
+        List<FavoriteProvider> favorites = favoriteRepo.findBySeniorProfile_Id(id);
+        Optional<CareRelationship> primaryRelation = careRelRepo.findBySeniorIdAndIsPrimary(id, true);
+        return mapToSeniorResponse(saved, favorites, primaryRelation.orElse(null));
     }
 
     @Transactional
@@ -74,7 +81,9 @@ public class ProfileService {
         fav.setProviderProfile(provider);
         favoriteRepo.save(fav);
 
-        return mapToSeniorResponse(senior, favoriteRepo.findBySeniorProfile_Id(seniorId));
+        Optional<CareRelationship> primaryRelation = careRelRepo.findBySeniorIdAndIsPrimary(seniorId, true);
+        return mapToSeniorResponse(senior, favoriteRepo.findBySeniorProfile_Id(seniorId),
+                primaryRelation.orElse(null));
     }
 
     @Transactional
@@ -82,7 +91,9 @@ public class ProfileService {
         SeniorProfile senior = seniorRepo.findById(seniorId)
                 .orElseThrow(() -> new RuntimeException("Senior profile not found: " + seniorId));
         favoriteRepo.deleteBySeniorProfile_IdAndProviderProfile_Id(seniorId, providerProfileId);
-        return mapToSeniorResponse(senior, favoriteRepo.findBySeniorProfile_Id(seniorId));
+        Optional<CareRelationship> primaryRelation = careRelRepo.findBySeniorIdAndIsPrimary(seniorId, true);
+        return mapToSeniorResponse(senior, favoriteRepo.findBySeniorProfile_Id(seniorId),
+                primaryRelation.orElse(null));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -153,7 +164,8 @@ public class ProfileService {
     // ═══════════════════════════════════════════════════════════════
 
     private SeniorProfileResponseDTO mapToSeniorResponse(SeniorProfile p,
-                                                         List<FavoriteProvider> favorites) {
+                                                         List<FavoriteProvider> favorites,
+                                                         CareRelationship primaryRelation) {
         SeniorProfileResponseDTO d = new SeniorProfileResponseDTO();
         d.setId(p.getId());
         d.setFullName(p.getUser().getUserName() + " " + p.getUser().getLastName());
@@ -162,8 +174,20 @@ public class ProfileService {
         d.setAddress(p.getAddress());
         d.setPhone(p.getPhone());
         d.setProfileImage(p.getProfileImage());
-        d.setFamilyMember(p.getFamilyMember());
-        d.setFamilyRelation(p.getFamilyRelation());
+
+        // ── Familiar responsable desde CareRelationship ───────────
+        if (primaryRelation != null) {
+            ClientProfile cp = primaryRelation.getClientProfile();
+            d.setFamilyMember(cp.getUser().getUserName() + " " + cp.getUser().getLastName());
+            d.setFamilyRelation(primaryRelation.getRelationshipType());
+            d.setFamilyPhone(cp.getPhone());   // ✅ teléfono real del familiar
+        } else {
+            // Fallback a campos manuales
+            d.setFamilyMember(p.getFamilyMember());
+            d.setFamilyRelation(p.getFamilyRelation());
+            d.setFamilyPhone(null);
+        }
+
         d.setEmergencyContactName(p.getEmergencyContactName());
         d.setEmergencyContactPhone(p.getEmergencyContactPhone());
         d.setEmergencyRelation(p.getEmergencyRelation());
@@ -263,7 +287,9 @@ public class ProfileService {
 
     private void updateUserFields(User u, String userName, String lastName, String email) {
         u.setUserName(userName);
-        u.setLastName(lastName);
+        if (lastName != null && !lastName.isBlank()) {
+            u.setLastName(lastName);
+        }
         u.setEmail(email);
     }
 }
