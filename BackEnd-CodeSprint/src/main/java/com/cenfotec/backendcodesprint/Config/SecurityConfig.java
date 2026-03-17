@@ -22,9 +22,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/verifications/**").permitAll()
+                        .requestMatchers("/profiles/**").permitAll()
+                        .requestMatchers( "/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults());
+                .httpBasic(basic -> basic.disable());
 
         return http.build();
     }
