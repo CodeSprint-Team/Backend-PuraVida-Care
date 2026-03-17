@@ -44,4 +44,22 @@ public class ProviderProfile extends BaseEntity {
 
     @Column(name = "provider_state", nullable = false, length = 20)
     private String providerState = "pending";
+
+    @Column(name = "bio", columnDefinition = "Text")
+    private String bio;
+
+    @Column(name = "zone", length = 150)
+    private String zone;
+
+    @Column(name = "phone", length = 50)
+    private String phone;
+
+    @Column(name = "profile_image", columnDefinition = "Text")
+    private String profileImage;
+
+    @Column(name = "verified", nullable = false)
+    private Boolean verified = false;
+
+    @Column(name = "insurance_active", nullable = false)
+    private Boolean insuranceActive = false;
 }
