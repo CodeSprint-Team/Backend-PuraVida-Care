@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class AdminService {
 
     private final ProviderProfileRepository providerRepo;
+    private final EmailService emailService;
 
     public List<ProviderPendingDTO> getPendingProviders() {
         return providerRepo.findByProviderState("pending")
@@ -29,10 +30,15 @@ public class AdminService {
         ProviderProfile provider = providerRepo.findByIdWithDetails(providerProfileId)
                 .orElseThrow(() -> new RuntimeException("Provider not found: " + providerProfileId));
 
+        String providerName = provider.getUser().getUserName() + " " + provider.getUser().getLastName();
+        String email = provider.getUser().getEmail();
+
         if ("approve".equalsIgnoreCase(dto.getAction())) {
             provider.setProviderState("active");
+            emailService.sendApprovalEmail(email, providerName);
         } else if ("reject".equalsIgnoreCase(dto.getAction())) {
             provider.setProviderState("rejected");
+            emailService.sendRejectionEmail(email, providerName, dto.getRejectionReason());
         } else {
             throw new RuntimeException("Action must be 'approve' or 'reject'");
         }
