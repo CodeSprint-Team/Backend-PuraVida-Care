@@ -17,4 +17,6 @@ public interface ProviderProfileRepository extends JpaRepository<ProviderProfile
     // ✅ Buscar por providerProfileId cargando relaciones (evita LazyInitializationException)
     @Query("SELECT p FROM ProviderProfile p JOIN FETCH p.user JOIN FETCH p.providerType WHERE p.id = :id")
     Optional<ProviderProfile> findByIdWithDetails(@Param("id") Long id);
+
+    boolean existsByUser_Id(Long userId);
 }
