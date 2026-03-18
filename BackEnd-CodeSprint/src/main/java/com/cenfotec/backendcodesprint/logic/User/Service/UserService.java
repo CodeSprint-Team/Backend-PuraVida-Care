@@ -2,8 +2,12 @@ package com.cenfotec.backendcodesprint.logic.User.Service;
 
 import com.cenfotec.backendcodesprint.logic.Model.Role;
 import com.cenfotec.backendcodesprint.logic.Model.User;
+import com.cenfotec.backendcodesprint.logic.User.DTO.Request.RegisterUserRequestDto;
+import com.cenfotec.backendcodesprint.logic.User.DTO.Response.UserResponseDto;
+import com.cenfotec.backendcodesprint.logic.User.Mapper.UserMapper;
 import com.cenfotec.backendcodesprint.logic.User.Repository.RoleRepository;
 import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
@@ -13,10 +17,17 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository) {
+    public UserService(UserRepository userRepository,
+                       RoleRepository roleRepository,
+                       PasswordEncoder passwordEncoder,
+                       UserMapper userMapper) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.userMapper = userMapper;
     }
 
     @Transactional
@@ -47,6 +58,28 @@ public class UserService {
 
             return userRepository.save(newUser);
         }
+    }
+
+    @Transactional
+    public UserResponseDto registerUser(RegisterUserRequestDto requestDto) {
+        if (userRepository.existsByEmail(requestDto.getEmail())) {
+            throw new RuntimeException("Ya existe un usuario con ese correo");
+        }
+
+        Role role = roleRepository.findById(requestDto.getRoleId())
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+
+        User user = new User();
+        user.setUserName(requestDto.getUserName());
+        user.setLastName(requestDto.getLastName());
+        user.setEmail(requestDto.getEmail());
+        user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        user.setRole(role);
+        user.setUserState("active");
+        user.setProvider("local");
+
+        User savedUser = userRepository.save(user);
+        return userMapper.toResponseDto(savedUser);
     }
 
     public User findByEmail(String email) {
