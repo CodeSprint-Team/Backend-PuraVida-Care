@@ -24,6 +24,8 @@ public class SecurityConfig {
                         .requestMatchers("/verifications/**").permitAll()
                         .requestMatchers("/profiles/**").permitAll()
                         .requestMatchers( "/auth/**").permitAll()
+                        .requestMatchers("/bookings/**").permitAll()
+                        .requestMatchers("/tracking/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(basic -> basic.disable());

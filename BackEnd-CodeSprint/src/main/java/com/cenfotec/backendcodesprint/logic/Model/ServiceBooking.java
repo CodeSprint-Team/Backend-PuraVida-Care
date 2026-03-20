@@ -58,4 +58,7 @@ public class ServiceBooking extends BaseEntity {
 
     @Column(name = "agreed_price_mode", nullable = false, length = 50)
     private String agreedPriceMode;
+
+    @Column(name = "booking_status", nullable = false, length = 30)
+    private String bookingStatus = "PENDIENTE";
 }
