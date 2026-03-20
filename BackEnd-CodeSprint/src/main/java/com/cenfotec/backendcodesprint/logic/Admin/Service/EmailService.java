@@ -112,4 +112,45 @@ public class EmailService {
             </html>
         """.formatted(providerName, reasonBlock);
     }
+
+    //User
+    public void sendUserActivationEmail(String toEmail, String userName) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(toEmail);
+            helper.setSubject("Tu cuenta ha sido activada");
+            helper.setText(
+                    "<h2>Hola " + userName + ",</h2>" +
+                            "<p>Tu cuenta ha sido <strong>activada</strong> exitosamente. " +
+                            "Ya podés iniciar sesión en PuraVida Care.</p>",
+                    true
+            );
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendUserDeactivationEmail(String toEmail, String userName, String reason) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(toEmail);
+            helper.setSubject("Tu cuenta ha sido desactivada");
+            String reasonText = (reason != null && !reason.isBlank())
+                    ? "<p><strong>Motivo:</strong> " + reason + "</p>"
+                    : "";
+            helper.setText(
+                    "<h2>Hola " + userName + ",</h2>" +
+                            "<p>Tu cuenta ha sido <strong>desactivada</strong> temporalmente.</p>" +
+                            reasonText +
+                            "<p>Si tenés alguna consulta, contactá al soporte.</p>",
+                    true
+            );
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
+    }
 }
