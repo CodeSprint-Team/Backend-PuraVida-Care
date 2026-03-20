@@ -33,7 +33,8 @@ public class SecurityConfig {
                         .requestMatchers( "/auth/**").permitAll()
                         .requestMatchers("/admin/**").permitAll()
                         .requestMatchers("/users/**").permitAll()
-
+                        .requestMatchers("/booking/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/booking/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(basic -> basic.disable());
