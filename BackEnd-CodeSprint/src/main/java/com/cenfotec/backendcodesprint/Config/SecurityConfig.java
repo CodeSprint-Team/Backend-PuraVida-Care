@@ -30,14 +30,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/verifications/**").permitAll()
                         .requestMatchers("/profiles/**").permitAll()
-                        .requestMatchers( "/auth/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").permitAll()
                         .requestMatchers("/users/**").permitAll()
-
-                        .anyRequest().authenticated()
+                        .requestMatchers("/services/**").permitAll()
+                        .anyRequest().permitAll() // ← cambia temporalmente a permitAll
                 )
                 .httpBasic(basic -> basic.disable());
-
         return http.build();
     }
 }
+
