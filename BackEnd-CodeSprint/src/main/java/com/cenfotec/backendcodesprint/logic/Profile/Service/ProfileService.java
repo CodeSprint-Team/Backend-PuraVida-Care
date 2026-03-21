@@ -3,6 +3,7 @@ package com.cenfotec.backendcodesprint.logic.Profile.Service;
 import com.cenfotec.backendcodesprint.logic.Model.*;
 import com.cenfotec.backendcodesprint.logic.Profile.DTO.*;
 import com.cenfotec.backendcodesprint.logic.Profile.Repository.*;
+import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,9 @@ public class ProfileService {
     private final CareServiceRepository        careServiceRepo;
     private final ReviewRepository             reviewRepo;
     private final CareRelationshipRepository   careRelRepo;
+    private final UserRepository userRepository;
+    private final ProviderTypeRepository providerTypeRepo;
+
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new Locale("es", "CR"));
@@ -96,6 +100,35 @@ public class ProfileService {
                 primaryRelation.orElse(null));
     }
 
+    @Transactional
+    public SeniorProfileResponseDTO createSeniorProfile(SeniorProfileCreateDTO dto) {
+        User user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found: " + dto.getUserId()));
+
+        if (seniorRepo.existsByUser_Id(dto.getUserId())) {
+            throw new RuntimeException("El usuario ya tiene un perfil de adulto mayor");
+        }
+
+        SeniorProfile p = new SeniorProfile();
+        p.setUser(user);
+        p.setAge(dto.getAge());
+        p.setAddress(dto.getAddress());
+        p.setPhone(dto.getPhone());
+        p.setProfileImage(dto.getProfileImage());
+        p.setFamilyMember(dto.getFamilyMember());
+        p.setFamilyRelation(dto.getFamilyRelation());
+        p.setEmergencyContactName(dto.getEmergencyContactName());
+        p.setEmergencyContactPhone(dto.getEmergencyContactPhone());
+        p.setEmergencyRelation(dto.getEmergencyRelation());
+        p.setMobilityNotes(dto.getMobilityNotes());
+        p.setCarePreference(dto.getCarePreference());
+        p.setHealthObservation(dto.getHealthObservation());
+        p.setAllergies(dto.getAllergies());
+
+        SeniorProfile saved = seniorRepo.save(p);
+        return mapToSeniorResponse(saved, List.of(), null);
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // CLIENT
     // ═══════════════════════════════════════════════════════════════
@@ -122,6 +155,34 @@ public class ProfileService {
 
         return mapToClientResponse(clientRepo.save(p));
     }
+
+    //crear cliente
+    @Transactional
+    public ClientProfileResponseDTO createClientProfile(ClientProfileCreateDTO dto) {
+        User user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found: " + dto.getUserId()));
+
+        if (clientRepo.existsByUser_Id(dto.getUserId())) {
+            throw new RuntimeException("El usuario ya tiene un perfil de cliente");
+        }
+
+        ClientProfile p = new ClientProfile();
+        p.setUser(user);
+        p.setPhone(dto.getPhone());
+        p.setNotes(dto.getNotes());
+        p.setProfileImage(dto.getProfileImage());
+        p.setRelationToSenior(dto.getRelationToSenior());
+        p.setEmergencyContactName(dto.getEmergencyContactName());
+        p.setEmergencyContactRelation(dto.getEmergencyContactRelation());
+        p.setEmergencyContactPhone(dto.getEmergencyContactPhone());
+        p.setImportantNotes(dto.getImportantNotes());
+
+        ClientProfile saved = clientRepo.save(p);
+        return mapToClientResponse(saved);
+    }
+
+
+
 
     // ═══════════════════════════════════════════════════════════════
     // PROVIDER
@@ -158,6 +219,37 @@ public class ProfileService {
         List<Review> reviews = reviewRepo.findByProviderProfile_Id(id);
         return mapToProviderResponse(saved, services, reviews);
     }
+
+    //create
+    @Transactional
+    public ProviderProfileResponseDTO createProviderProfile(ProviderProfileCreateDTO dto) {
+        User user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + dto.getUserId()));
+
+        if (providerRepo.existsByUser_Id(dto.getUserId())) {
+            throw new RuntimeException("El usuario ya tiene un perfil de proveedor");
+        }
+
+        ProviderType providerType = providerTypeRepo.findById(dto.getProviderTypeId())
+                .orElseThrow(() -> new RuntimeException("Tipo de proveedor no encontrado: " + dto.getProviderTypeId()));
+
+        ProviderProfile p = new ProviderProfile();
+        p.setUser(user);
+        p.setProviderType(providerType);
+        p.setExperienceDescription(dto.getExperienceDescription());
+        p.setExperienceYears(dto.getExperienceYears());
+        p.setProviderState(dto.getProviderState() != null ? dto.getProviderState() : "activo");
+        p.setBio(dto.getBio());
+        p.setZone(dto.getZone());
+        p.setPhone(dto.getPhone());
+        p.setProfileImage(dto.getProfileImage());
+        p.setVerified(dto.getVerified() != null ? dto.getVerified() : false);
+        p.setInsuranceActive(dto.getInsuranceActive() != null ? dto.getInsuranceActive() : false);
+
+        ProviderProfile saved = providerRepo.save(p);
+        return mapToProviderResponse(saved, List.of(), List.of());
+    }
+
 
     // ═══════════════════════════════════════════════════════════════
     // MAPPERS

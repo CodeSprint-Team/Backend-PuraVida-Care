@@ -4,11 +4,13 @@ import com.cenfotec.backendcodesprint.logic.Profile.DTO.*;
 import com.cenfotec.backendcodesprint.logic.Profile.Service.ProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/profiles")
+@CrossOrigin(origins = "")
 @RequiredArgsConstructor
 public class ProfileController {
 
@@ -46,6 +48,14 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.removeFavoriteProvider(seniorId, providerProfileId));
     }
 
+    //post
+    @PostMapping("/senior")
+    public ResponseEntity<SeniorProfileResponseDTO> createSeniorProfile(
+            @Valid @RequestBody SeniorProfileCreateDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(profileService.createSeniorProfile(dto));
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // CLIENT
     // ═══════════════════════════════════════════════════════════════
@@ -62,6 +72,15 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.updateClientProfile(id, dto));
     }
 
+    //post
+    @PostMapping("/client")
+    public ResponseEntity<ClientProfileResponseDTO> createClientProfile(
+            @Valid @RequestBody ClientProfileCreateDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(profileService.createClientProfile(dto));
+    }
+
+
     // ═══════════════════════════════════════════════════════════════
     // PROVIDER
     // ═══════════════════════════════════════════════════════════════
@@ -76,5 +95,13 @@ public class ProfileController {
             @PathVariable Long id,
             @Valid @RequestBody ProviderProfileUpdateDTO dto) {
         return ResponseEntity.ok(profileService.updateProviderProfile(id, dto));
+    }
+
+    //post
+    @PostMapping("/provider")
+    public ResponseEntity<ProviderProfileResponseDTO> createProviderProfile(
+            @Valid @RequestBody ProviderProfileCreateDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(profileService.createProviderProfile(dto));
     }
 }
