@@ -31,6 +31,8 @@ public class SecurityConfig {
                         .requestMatchers("/verifications/**").permitAll()
                         .requestMatchers("/profiles/**").permitAll()
                         .requestMatchers( "/auth/**").permitAll()
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/google/**").permitAll()
                         .requestMatchers("/admin/**").permitAll()
                         .requestMatchers("/users/**").permitAll()
                         .requestMatchers("/booking/**").permitAll()

@@ -28,7 +28,6 @@ public class ProfileService {
     private final UserRepository userRepository;
     private final ProviderTypeRepository providerTypeRepo;
 
-
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new Locale("es", "CR"));
 
@@ -156,7 +155,6 @@ public class ProfileService {
         return mapToClientResponse(clientRepo.save(p));
     }
 
-    //crear cliente
     @Transactional
     public ClientProfileResponseDTO createClientProfile(ClientProfileCreateDTO dto) {
         User user = userRepository.findById(dto.getUserId())
@@ -181,9 +179,6 @@ public class ProfileService {
         return mapToClientResponse(saved);
     }
 
-
-
-
     // ═══════════════════════════════════════════════════════════════
     // PROVIDER
     // ═══════════════════════════════════════════════════════════════
@@ -194,6 +189,15 @@ public class ProfileService {
         List<CareService> services = careServiceRepo
                 .findByProviderProfile_IdAndPublicationState(id, "published");
         List<Review> reviews = reviewRepo.findByProviderProfile_Id(id);
+        return mapToProviderResponse(p, services, reviews);
+    }
+
+    public ProviderProfileResponseDTO getProviderProfileByUserId(Long userId) {
+        ProviderProfile p = providerRepo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Provider profile not found for user: " + userId));
+        List<CareService> services = careServiceRepo
+                .findByProviderProfile_IdAndPublicationState(p.getId(), "published");
+        List<Review> reviews = reviewRepo.findByProviderProfile_Id(p.getId());
         return mapToProviderResponse(p, services, reviews);
     }
 
@@ -220,7 +224,6 @@ public class ProfileService {
         return mapToProviderResponse(saved, services, reviews);
     }
 
-    //create
     @Transactional
     public ProviderProfileResponseDTO createProviderProfile(ProviderProfileCreateDTO dto) {
         User user = userRepository.findById(dto.getUserId())
@@ -250,7 +253,6 @@ public class ProfileService {
         return mapToProviderResponse(saved, List.of(), List.of());
     }
 
-
     // ═══════════════════════════════════════════════════════════════
     // MAPPERS
     // ═══════════════════════════════════════════════════════════════
@@ -267,14 +269,12 @@ public class ProfileService {
         d.setPhone(p.getPhone());
         d.setProfileImage(p.getProfileImage());
 
-        // ── Familiar responsable desde CareRelationship ───────────
         if (primaryRelation != null) {
             ClientProfile cp = primaryRelation.getClientProfile();
             d.setFamilyMember(cp.getUser().getUserName() + " " + cp.getUser().getLastName());
             d.setFamilyRelation(primaryRelation.getRelationshipType());
-            d.setFamilyPhone(cp.getPhone());   // ✅ teléfono real del familiar
+            d.setFamilyPhone(cp.getPhone());
         } else {
-            // Fallback a campos manuales
             d.setFamilyMember(p.getFamilyMember());
             d.setFamilyRelation(p.getFamilyRelation());
             d.setFamilyPhone(null);
