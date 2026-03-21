@@ -80,7 +80,13 @@ public class AuthController {
                     subject,
                     picture
             );
-
+               // Bloqueo: admin desactivó al usuario
+            if
+            ("inactive".equalsIgnoreCase(user.getUserState())) {
+                return
+                        ResponseEntity.status(403).body(Map.of("error",
+                                "Cuenta desactivada. Contactá al soporte."));
+            }
             // 5. Generar tu propio JWT
             String jwtToken = jwtTokenProvider.generateToken(user);
 
