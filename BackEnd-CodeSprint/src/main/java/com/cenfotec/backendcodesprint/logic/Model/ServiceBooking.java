@@ -58,4 +58,10 @@ public class ServiceBooking extends BaseEntity {
 
     @Column(name = "agreed_price_mode", nullable = false, length = 50)
     private String agreedPriceMode;
+
+    @Column(name = "booking_status", nullable = false, length = 20)
+    private String bookingStatus = "pending";
+
+    @Column(name = "rejection_reason", columnDefinition = "Text")
+    private String rejectionReason;
 }
