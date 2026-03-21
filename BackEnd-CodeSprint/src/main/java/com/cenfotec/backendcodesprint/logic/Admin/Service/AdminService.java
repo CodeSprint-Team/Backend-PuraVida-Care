@@ -4,7 +4,9 @@ import com.cenfotec.backendcodesprint.logic.Admin.DTO.ProviderPendingDTO;
 import com.cenfotec.backendcodesprint.logic.Admin.DTO.ReviewProviderDTO;
 import com.cenfotec.backendcodesprint.logic.Admin.DTO.ReviewUserDTO;
 import com.cenfotec.backendcodesprint.logic.Admin.DTO.UserStatusDTO;
+import com.cenfotec.backendcodesprint.logic.Admin.DTO.*;
 import com.cenfotec.backendcodesprint.logic.Admin.Mapper.AdminUserMapper;
+import com.cenfotec.backendcodesprint.logic.Model.CareService;
 import com.cenfotec.backendcodesprint.logic.Model.ProviderProfile;
 import com.cenfotec.backendcodesprint.logic.Model.User;
 import com.cenfotec.backendcodesprint.logic.Profile.Repository.ProviderProfileRepository;
@@ -13,6 +15,8 @@ import com.cenfotec.backendcodesprint.logic.User.Service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.cenfotec.backendcodesprint.logic.Profile.Repository.CareServiceRepository;
+import com.cenfotec.backendcodesprint.logic.Admin.Mapper.AdminCareServiceMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +30,8 @@ public class AdminService {
     private final UserService userService;
     private final UserRepository userRepo;
     private final AdminUserMapper adminUserMapper;
+    private final CareServiceRepository careServiceRepo;
+    private final AdminCareServiceMapper adminCareServiceMapper;
 
     public List<ProviderPendingDTO> getPendingProviders() {
         return providerRepo.findByProviderState("pending")
@@ -110,4 +116,30 @@ public class AdminService {
         user.setUserState("activate".equalsIgnoreCase(dto.getAction()) ? "active" : "inactive");
         return adminUserMapper.toDTO(user);
     }
+
+    public List<CareServicePendingDTO> getPendingCareServices() {
+        return careServiceRepo.findByPublicationState("pending")
+                .stream()
+                .map(adminCareServiceMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public CareServicePendingDTO reviewCareService(Long careServiceId, ReviewCareServiceDTO dto) {
+        CareService careService = careServiceRepo.findByIdWithDetails(careServiceId)
+                .orElseThrow(() -> new RuntimeException("CareService not found: " + careServiceId));
+
+        if ("approve".equalsIgnoreCase(dto.getAction())) {
+            careService.setPublicationState("published");
+            careService.setRejectionReason(null);
+        } else if ("reject".equalsIgnoreCase(dto.getAction())) {
+            careService.setPublicationState("rejected");
+            careService.setRejectionReason(dto.getRejectionReason());
+        } else {
+            throw new RuntimeException("Action must be 'approve' or 'reject'");
+        }
+
+        return adminCareServiceMapper.toDTO(careServiceRepo.save(careService));
+    }
+
 }
