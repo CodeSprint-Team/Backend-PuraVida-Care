@@ -11,5 +11,9 @@ public interface TrackingSessionMapper {
     @Mapping(target = "trackingSessionId", source = "id")
     @Mapping(target = "bookingId", source = "serviceBooking.id")
     @Mapping(target = "providerProfileId", source = "providerProfile.id")
+    @Mapping(target = "originLatitude", source = "serviceBooking.originLatitude")
+    @Mapping(target = "originLongitude", source = "serviceBooking.originLongitude")
+    @Mapping(target = "destinationLatitude", source = "serviceBooking.destinationLatitude")
+    @Mapping(target = "destinationLongitude", source = "serviceBooking.destinationLongitude")
     TrackingSessionResponseDto toResponse(TrackingSession trackingSession);
 }

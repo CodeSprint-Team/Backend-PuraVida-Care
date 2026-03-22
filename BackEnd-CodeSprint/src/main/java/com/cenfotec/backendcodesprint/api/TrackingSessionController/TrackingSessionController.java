@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/tracking")
 @RequiredArgsConstructor
@@ -42,6 +44,18 @@ public class TrackingSessionController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(trackingService.addPoint(sessionId, dto, providerProfileId));
+    }
+
+    @GetMapping("/sessions/{sessionId}/points/history")
+    public ResponseEntity<List<TrackingPointResponseDto>> getPoints(
+            @PathVariable Long sessionId) {
+        return ResponseEntity.ok(trackingService.getPointsBySession(sessionId));
+    }
+
+    @GetMapping("/sessions/{sessionId}")
+    public ResponseEntity<TrackingSessionResponseDto> getSession(
+            @PathVariable Long sessionId) {
+        return ResponseEntity.ok(trackingService.getSession(sessionId));
     }
 
 

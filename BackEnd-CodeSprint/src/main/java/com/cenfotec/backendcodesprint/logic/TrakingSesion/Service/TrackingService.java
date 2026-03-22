@@ -22,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -100,6 +101,23 @@ public class TrackingService {
         return trackingPointMapper.toResponse(point);
     }
 
+    public List<TrackingPointResponseDto> getPointsBySession(Long sessionId) {
+        trackingSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Sesión no encontrada"));
+        return trackingPonitRepository
+                .findByTrackingSessionIdOrderByRecordedAtAsc(sessionId)
+                .stream()
+                .map(trackingPointMapper::toResponse)
+                .toList();
+    }
+
+    public TrackingSessionResponseDto getSession(Long sessionId) {
+        TrackingSession session = trackingSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Sesión no encontrada"));
+        return trackingSessionMapper.toResponse(session);
+    }
 
 
     private TrackingSession getValidationSession(Long sessionId, Long providerProfileId) {
