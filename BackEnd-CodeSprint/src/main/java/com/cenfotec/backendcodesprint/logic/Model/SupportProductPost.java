@@ -24,6 +24,11 @@ public class SupportProductPost extends BaseEntity {
     @NotNull
     private SupportProductCatalog supportProductCatalog;
 
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @NotNull
+    private User user;
+
     @Column(name = "title", nullable = false, length = 150)
     @NotBlank
     private String title;

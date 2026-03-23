@@ -33,6 +33,7 @@ public class SecurityConfig {
                         .requestMatchers( "/auth/**").permitAll()
                         .requestMatchers("/admin/**").permitAll()
                         .requestMatchers("/users/**").permitAll()
+                        .requestMatchers("/support-products/**").permitAll()
 
                         .anyRequest().authenticated()
                 )
