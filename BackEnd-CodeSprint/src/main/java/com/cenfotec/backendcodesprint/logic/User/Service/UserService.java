@@ -1,0 +1,100 @@
+package com.cenfotec.backendcodesprint.logic.User.Service;
+
+import com.cenfotec.backendcodesprint.logic.Model.Role;
+import com.cenfotec.backendcodesprint.logic.Model.User;
+import com.cenfotec.backendcodesprint.logic.User.DTO.Request.RegisterUserRequestDto;
+import com.cenfotec.backendcodesprint.logic.User.DTO.Response.UserResponseDto;
+import com.cenfotec.backendcodesprint.logic.User.Mapper.UserMapper;
+import com.cenfotec.backendcodesprint.logic.User.Repository.RoleRepository;
+import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
+
+@Service
+public class UserService {
+
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+
+    public UserService(UserRepository userRepository,
+                       RoleRepository roleRepository,
+                       PasswordEncoder passwordEncoder,
+                       UserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.userMapper = userMapper;
+    }
+
+    @Transactional
+    public User createOrUpdateGoogleUser(String email, String firstName, String lastName,
+                                         String googleId, String photoUrl) {
+        Optional<User> existingUser = userRepository.findByEmail(email);
+
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            user.setGoogleId(googleId);
+            user.setPhotoUrl(photoUrl);
+            user.setProvider("google");
+            return userRepository.save(user);
+        } else {
+            Role defaultRole = roleRepository.findByRoleName("cliente")
+                    .orElseThrow(() -> new RuntimeException("Role 'cliente' not found"));
+
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setUserName(firstName);
+            newUser.setLastName(lastName);
+            newUser.setGoogleId(googleId);
+            newUser.setPhotoUrl(photoUrl);
+            newUser.setProvider("google");
+            newUser.setUserState("active");
+            newUser.setRole(defaultRole);
+            newUser.setPassword("");
+
+            return userRepository.save(newUser);
+        }
+    }
+
+    @Transactional
+    public UserResponseDto registerUser(RegisterUserRequestDto requestDto) {
+        if (userRepository.existsByEmail(requestDto.getEmail())) {
+            throw new RuntimeException("Ya existe un usuario con ese correo");
+        }
+
+        Role role = roleRepository.findById(requestDto.getRoleId())
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+
+        User user = new User();
+        user.setUserName(requestDto.getUserName());
+        user.setLastName(requestDto.getLastName());
+        user.setEmail(requestDto.getEmail());
+        user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        user.setRole(role);
+        user.setUserState("active");
+        user.setProvider("local");
+
+        User savedUser = userRepository.save(user);
+        return userMapper.toResponseDto(savedUser);
+    }
+
+    public User loginWithEmailAndPassword(String email, String password) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Credenciales incorrectas"));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Credenciales incorrectas");
+        }
+
+        return user;
+    }
+
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+}
