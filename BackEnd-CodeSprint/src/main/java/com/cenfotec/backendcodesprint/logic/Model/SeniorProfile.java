@@ -16,7 +16,7 @@ public class SeniorProfile extends BaseEntity {
     @Column(name = "senior_profile_id")
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @OneToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @NotNull
     private User user;

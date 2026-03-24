@@ -61,4 +61,11 @@ public class ServiceBooking extends BaseEntity {
 
     @Column(name = "booking_status", nullable = false, length = 30)
     private String bookingStatus = "PENDIENTE";
+
+    @Column(name = "booking_status", nullable = false, length = 20)
+    private String bookingStatus = "pending";
+
+    @Column(name = "rejection_reason", columnDefinition = "Text")
+    private String rejectionReason;
+
 }
