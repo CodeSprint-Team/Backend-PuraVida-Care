@@ -25,9 +25,8 @@ public class ProfileService {
     private final CareServiceRepository        careServiceRepo;
     private final ReviewRepository             reviewRepo;
     private final CareRelationshipRepository   careRelRepo;
-    private final UserRepository userRepository;
-    private final ProviderTypeRepository providerTypeRepo;
-
+    private final UserRepository               userRepository;
+    private final ProviderTypeRepository       providerTypeRepo;
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new Locale("es", "CR"));
@@ -41,6 +40,14 @@ public class ProfileService {
                 .orElseThrow(() -> new RuntimeException("Senior profile not found: " + id));
         List<FavoriteProvider> favorites = favoriteRepo.findBySeniorProfile_Id(id);
         Optional<CareRelationship> primaryRelation = careRelRepo.findBySeniorIdAndIsPrimary(id, true);
+        return mapToSeniorResponse(p, favorites, primaryRelation.orElse(null));
+    }
+
+    public SeniorProfileResponseDTO getSeniorProfileByUserId(Long userId) {
+        SeniorProfile p = seniorRepo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Senior profile not found for user: " + userId));
+        List<FavoriteProvider> favorites = favoriteRepo.findBySeniorProfile_Id(p.getId());
+        Optional<CareRelationship> primaryRelation = careRelRepo.findBySeniorIdAndIsPrimary(p.getId(), true);
         return mapToSeniorResponse(p, favorites, primaryRelation.orElse(null));
     }
 
@@ -138,6 +145,12 @@ public class ProfileService {
                 .orElseThrow(() -> new RuntimeException("Client profile not found: " + id)));
     }
 
+    public ClientProfileResponseDTO getClientProfileByUserId(Long userId) {
+        ClientProfile p = clientRepo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Client profile not found for user: " + userId));
+        return mapToClientResponse(p);
+    }
+
     @Transactional
     public ClientProfileResponseDTO updateClientProfile(Long id, ClientProfileUpdateDTO dto) {
         ClientProfile p = clientRepo.findById(id)
@@ -156,7 +169,6 @@ public class ProfileService {
         return mapToClientResponse(clientRepo.save(p));
     }
 
-    //crear cliente
     @Transactional
     public ClientProfileResponseDTO createClientProfile(ClientProfileCreateDTO dto) {
         User user = userRepository.findById(dto.getUserId())
@@ -181,8 +193,11 @@ public class ProfileService {
         return mapToClientResponse(saved);
     }
 
-
-
+    public ClientProfileResponseDTO getClientProfileByEmail(String email) {
+        ClientProfile p = clientRepo.findByUserEmail(email)
+                .orElseThrow(() -> new RuntimeException("Client profile not found for email: " + email));
+        return mapToClientResponse(p);
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // PROVIDER
@@ -194,6 +209,15 @@ public class ProfileService {
         List<CareService> services = careServiceRepo
                 .findByProviderProfile_IdAndPublicationState(id, "published");
         List<Review> reviews = reviewRepo.findByProviderProfile_Id(id);
+        return mapToProviderResponse(p, services, reviews);
+    }
+
+    public ProviderProfileResponseDTO getProviderProfileByUserId(Long userId) {
+        ProviderProfile p = providerRepo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Provider profile not found for user: " + userId));
+        List<CareService> services = careServiceRepo
+                .findByProviderProfile_IdAndPublicationState(p.getId(), "published");
+        List<Review> reviews = reviewRepo.findByProviderProfile_Id(p.getId());
         return mapToProviderResponse(p, services, reviews);
     }
 
@@ -220,7 +244,6 @@ public class ProfileService {
         return mapToProviderResponse(saved, services, reviews);
     }
 
-    //create
     @Transactional
     public ProviderProfileResponseDTO createProviderProfile(ProviderProfileCreateDTO dto) {
         User user = userRepository.findById(dto.getUserId())
@@ -250,7 +273,6 @@ public class ProfileService {
         return mapToProviderResponse(saved, List.of(), List.of());
     }
 
-
     // ═══════════════════════════════════════════════════════════════
     // MAPPERS
     // ═══════════════════════════════════════════════════════════════
@@ -267,14 +289,12 @@ public class ProfileService {
         d.setPhone(p.getPhone());
         d.setProfileImage(p.getProfileImage());
 
-        // ── Familiar responsable desde CareRelationship ───────────
         if (primaryRelation != null) {
             ClientProfile cp = primaryRelation.getClientProfile();
             d.setFamilyMember(cp.getUser().getUserName() + " " + cp.getUser().getLastName());
             d.setFamilyRelation(primaryRelation.getRelationshipType());
-            d.setFamilyPhone(cp.getPhone());   // ✅ teléfono real del familiar
+            d.setFamilyPhone(cp.getPhone());
         } else {
-            // Fallback a campos manuales
             d.setFamilyMember(p.getFamilyMember());
             d.setFamilyRelation(p.getFamilyRelation());
             d.setFamilyPhone(null);

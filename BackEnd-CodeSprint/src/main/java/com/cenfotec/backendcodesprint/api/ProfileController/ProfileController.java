@@ -25,14 +25,17 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.getSeniorProfile(id));
     }
 
+    @GetMapping("/senior/by-user/{userId}")
+    public ResponseEntity<SeniorProfileResponseDTO> getSeniorProfileByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(profileService.getSeniorProfileByUserId(userId));
+    }
+
     @PutMapping("/senior/{id}")
     public ResponseEntity<SeniorProfileResponseDTO> updateSeniorProfile(
             @PathVariable Long id,
             @Valid @RequestBody SeniorProfileUpdateDTO dto) {
         return ResponseEntity.ok(profileService.updateSeniorProfile(id, dto));
     }
-
-    // ── Favoritos ─────────────────────────────────────────────────
 
     @PostMapping("/senior/{seniorId}/favorites/{providerProfileId}")
     public ResponseEntity<SeniorProfileResponseDTO> addFavorite(
@@ -48,7 +51,6 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.removeFavoriteProvider(seniorId, providerProfileId));
     }
 
-    //post
     @PostMapping("/senior")
     public ResponseEntity<SeniorProfileResponseDTO> createSeniorProfile(
             @Valid @RequestBody SeniorProfileCreateDTO dto) {
@@ -65,6 +67,11 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.getClientProfile(id));
     }
 
+    @GetMapping("/client/by-user/{userId}")
+    public ResponseEntity<ClientProfileResponseDTO> getClientProfileByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(profileService.getClientProfileByUserId(userId));
+    }
+
     @PutMapping("/client/{id}")
     public ResponseEntity<ClientProfileResponseDTO> updateClientProfile(
             @PathVariable Long id,
@@ -72,7 +79,6 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.updateClientProfile(id, dto));
     }
 
-    //post
     @PostMapping("/client")
     public ResponseEntity<ClientProfileResponseDTO> createClientProfile(
             @Valid @RequestBody ClientProfileCreateDTO dto) {
@@ -80,6 +86,10 @@ public class ProfileController {
                 .body(profileService.createClientProfile(dto));
     }
 
+    @GetMapping("/client/by-email/{email}")
+    public ResponseEntity<ClientProfileResponseDTO> getClientProfileByEmail(@PathVariable String email) {
+        return ResponseEntity.ok(profileService.getClientProfileByEmail(email));
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // PROVIDER
@@ -90,6 +100,11 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.getProviderProfile(id));
     }
 
+    @GetMapping("/provider/by-user/{userId}")
+    public ResponseEntity<ProviderProfileResponseDTO> getProviderProfileByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(profileService.getProviderProfileByUserId(userId));
+    }
+
     @PutMapping("/provider/{id}")
     public ResponseEntity<ProviderProfileResponseDTO> updateProviderProfile(
             @PathVariable Long id,
@@ -97,7 +112,6 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.updateProviderProfile(id, dto));
     }
 
-    //post
     @PostMapping("/provider")
     public ResponseEntity<ProviderProfileResponseDTO> createProviderProfile(
             @Valid @RequestBody ProviderProfileCreateDTO dto) {
