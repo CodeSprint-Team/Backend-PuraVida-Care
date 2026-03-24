@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter @Setter
 @Entity
@@ -62,4 +63,7 @@ public class ProviderProfile extends BaseEntity {
 
     @Column(name = "insurance_active", nullable = false)
     private Boolean insuranceActive = false;
+
+    @OneToMany(mappedBy = "providerProfile", fetch = FetchType.LAZY)
+    private List<CareService> careServices;
 }

@@ -18,6 +18,9 @@ public interface ProviderProfileRepository extends JpaRepository<ProviderProfile
     @Query("SELECT p FROM ProviderProfile p JOIN FETCH p.user JOIN FETCH p.providerType WHERE p.id = :id")
     Optional<ProviderProfile> findByIdWithDetails(@Param("id") Long id);
 
+    boolean existsByUser_Id(Long userId);
+
     @Query("SELECT p FROM ProviderProfile p JOIN FETCH p.user JOIN FETCH p.providerType WHERE p.providerState = :state")
     List<ProviderProfile> findByProviderState(@Param("state") String state);
+
 }
