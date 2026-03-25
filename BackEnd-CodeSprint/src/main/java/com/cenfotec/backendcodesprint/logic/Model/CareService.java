@@ -55,5 +55,20 @@ public class CareService extends BaseEntity {
 
     @Column(name = "rejection_reason", columnDefinition = "Text")
     private String rejectionReason;
+
+    @Column(name = "zone", length = 100)
+    private String zone;
+
+    @Column(name = "modality", length = 50)
+    private String modality;
+
+    @Column(name = "experience_required")
+    private Boolean experienceRequired;
+
+    @Column(name = "license_required")
+    private Boolean licenseRequired;
+
+    @Column(name = "certification_required")
+    private Boolean certificationRequired;
 }
 
