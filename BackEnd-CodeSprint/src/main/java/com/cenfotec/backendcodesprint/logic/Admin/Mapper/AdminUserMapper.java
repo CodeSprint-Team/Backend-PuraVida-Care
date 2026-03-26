@@ -15,7 +15,7 @@ public class AdminUserMapper {
         dto.setUserState(u.getUserState());
         dto.setProvider(u.getProvider());
         dto.setPhotoUrl(u.getPhotoUrl());
-        dto.setRole(u.getRole().getRoleName());
+        dto.setRole(u.getRole() != null ? u.getRole().getRoleName() : "N/A");
         return dto;
     }
 }

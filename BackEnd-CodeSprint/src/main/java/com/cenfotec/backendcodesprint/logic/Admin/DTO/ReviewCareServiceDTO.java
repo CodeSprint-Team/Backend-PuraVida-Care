@@ -4,8 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter
-public class ReviewProviderDTO {
+public class ReviewCareServiceDTO {
     private String action; // "approve" o "reject"
     private String rejectionReason;
-    private String infoMessage; // mensaje cuando se solicite info al user
 }
