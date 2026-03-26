@@ -35,11 +35,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH,  "/profiles/**").permitAll()
                         .requestMatchers("/verifications/**").permitAll()
                         .requestMatchers("/profiles/**").permitAll()
-                        .requestMatchers( "/auth/**").permitAll()
                         .requestMatchers("/bookings/**").permitAll()
                         .requestMatchers("/tracking/**").permitAll()
-                        .requestMatchers("/admin/**").permitAll()
-                        .requestMatchers("/users/**").permitAll()
+
+                        .requestMatchers("/simulation/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/ws").permitAll()
+
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").permitAll()
                         .requestMatchers("/users/**").permitAll()
