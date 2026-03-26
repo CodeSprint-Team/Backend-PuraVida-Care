@@ -1,5 +1,6 @@
 package com.cenfotec.backendcodesprint.logic.SupportProduct.Service;
 
+import com.cenfotec.backendcodesprint.logic.Cloudinary.CloudinaryService;
 import com.cenfotec.backendcodesprint.logic.Model.SupportProductCatalog;
 import com.cenfotec.backendcodesprint.logic.Model.SupportProductPost;
 import com.cenfotec.backendcodesprint.logic.Model.User;
@@ -12,9 +13,11 @@ import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +26,10 @@ public class SupportProductService {
     private final SupportProductPostRepository postRepository;
     private final SupportProductCatalogRepository catalogRepository;
     private final UserRepository userRepository;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional
-    public void createPost(CreateSupportProductPostRequestDTO dto) {
+    public void createPost(CreateSupportProductPostRequestDTO dto, MultipartFile image) {
 
         validateCreate(dto);
 
@@ -49,6 +53,12 @@ public class SupportProductService {
         post.setLocationLongitude(dto.getLocationLng());
         post.setLocationText(dto.getLocationText());
         post.setUsageTimeText(dto.getUsageTimeText());
+
+        if (image != null && !image.isEmpty()) {
+            Map<String, String> uploadResult = cloudinaryService.upload(image);
+            post.setImageUrl(uploadResult.get("url"));
+            post.setImagePath(uploadResult.get("path"));
+        }
 
         postRepository.save(post);
     }

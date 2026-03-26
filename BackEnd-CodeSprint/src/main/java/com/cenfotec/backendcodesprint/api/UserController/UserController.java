@@ -24,4 +24,5 @@ public class UserController {
         UserResponseDto responseDto = userService.registerUser(requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
+
 }

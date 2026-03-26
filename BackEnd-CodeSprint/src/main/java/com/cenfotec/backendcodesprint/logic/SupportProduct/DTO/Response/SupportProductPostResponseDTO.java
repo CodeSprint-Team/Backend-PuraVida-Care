@@ -34,4 +34,7 @@ public class SupportProductPostResponseDTO {
 
     private LocalDateTime created;
     private LocalDateTime updated;
+
+    private String imageUrl;
+    private String imagePath;
 }

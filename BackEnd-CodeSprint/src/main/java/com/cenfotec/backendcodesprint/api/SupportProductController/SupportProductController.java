@@ -6,8 +6,10 @@ import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Response.SupportP
 import com.cenfotec.backendcodesprint.logic.SupportProduct.Service.SupportProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,9 +21,13 @@ public class SupportProductController {
 
     private final SupportProductService supportProductService;
 
-    @PostMapping
-    public ResponseEntity<String> createPost(@RequestBody CreateSupportProductPostRequestDTO data) {
-        supportProductService.createPost(data);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> createPost(
+            @ModelAttribute CreateSupportProductPostRequestDTO data,
+            @RequestParam(value = "image", required = false) MultipartFile image
+    ) {
+        supportProductService.createPost(data, image);
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body("Publicación creada correctamente");
     }

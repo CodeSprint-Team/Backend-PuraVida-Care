@@ -70,4 +70,10 @@ public class SupportProductPost extends BaseEntity {
 
     @Column(name = "usage_time_text", length = 50)
     private String usageTimeText;
+
+    @Column(name = "image_url", columnDefinition = "Text")
+    private String imageUrl;
+
+    @Column(name = "image_path", length = 255)
+    private String imagePath;
 }

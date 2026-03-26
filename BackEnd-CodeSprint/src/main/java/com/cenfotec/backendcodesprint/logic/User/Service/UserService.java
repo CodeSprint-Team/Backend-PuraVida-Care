@@ -1,5 +1,6 @@
 package com.cenfotec.backendcodesprint.logic.User.Service;
 
+import com.cenfotec.backendcodesprint.logic.Exeptions.DuplicateResourceException;
 import com.cenfotec.backendcodesprint.logic.Model.Role;
 import com.cenfotec.backendcodesprint.logic.Model.User;
 import com.cenfotec.backendcodesprint.logic.User.DTO.Request.RegisterUserRequestDto;
@@ -52,7 +53,7 @@ public class UserService {
             newUser.setGoogleId(googleId);
             newUser.setPhotoUrl(photoUrl);
             newUser.setProvider("google");
-            newUser.setUserState("active");
+            newUser.setUserState("PENDIENTE_VERIFICACION");
             newUser.setRole(defaultRole);
             newUser.setPassword("");
 
@@ -63,7 +64,7 @@ public class UserService {
     @Transactional
     public UserResponseDto registerUser(RegisterUserRequestDto requestDto) {
         if (userRepository.existsByEmail(requestDto.getEmail())) {
-            throw new RuntimeException("Ya existe un usuario con ese correo");
+            throw new DuplicateResourceException("Correo ya registrado");
         }
 
         Role role = roleRepository.findById(requestDto.getRoleId())
@@ -86,4 +87,5 @@ public class UserService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
+
 }
