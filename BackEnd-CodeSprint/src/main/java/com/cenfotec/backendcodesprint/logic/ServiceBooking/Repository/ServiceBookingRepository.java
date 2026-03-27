@@ -28,4 +28,28 @@ public interface ServiceBookingRepository extends JpaRepository<ServiceBooking, 
     @EntityGraph(attributePaths = {"careService.providerProfile"})
     @Query("SELECT sb FROM ServiceBooking sb WHERE sb.id = :id")
     Optional<ServiceBooking> findByIdWithProvider(@Param("id") Long id);
+    @EntityGraph(attributePaths = {
+            "careService",
+            "careService.providerProfile",
+            "clientProfile",
+            "clientProfile.user",
+            "seniorProfile",
+            "seniorProfile.user"
+    })
+    List<ServiceBooking> findByCareService_ProviderProfile_IdOrderByCreatedDesc(
+            Long providerProfileId);
+
+    @EntityGraph(attributePaths = {
+            "careService",
+            "careService.providerProfile",
+            "clientProfile",
+            "clientProfile.user",
+            "seniorProfile",
+            "seniorProfile.user"
+    })
+    List<ServiceBooking> findByCareService_ProviderProfile_IdAndBookingStatusOrderByCreatedDesc(
+            Long providerProfileId,
+            String bookingStatus);
 }
+
+
