@@ -64,7 +64,6 @@ public class UserService {
     @Transactional
     public UserResponseDto registerUser(RegisterUserRequestDto requestDto) {
         if (userRepository.existsByEmail(requestDto.getEmail())) {
-            throw new DuplicateResourceException("Correo ya registrado");
         }
 
         Role role = roleRepository.findById(requestDto.getRoleId())
