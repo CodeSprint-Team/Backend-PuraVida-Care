@@ -1,5 +1,6 @@
 package com.cenfotec.backendcodesprint.logic.Admin.DTO;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,4 +14,5 @@ public class UserStatusDTO {
     private String provider;
     private String photoUrl;
     private String role;
+
 }
