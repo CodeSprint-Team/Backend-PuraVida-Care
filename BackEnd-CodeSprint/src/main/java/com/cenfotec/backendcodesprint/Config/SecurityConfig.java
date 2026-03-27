@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT,    "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH,  "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/booking/**").permitAll()
+                        .requestMatchers("/agenda-cliente/**").permitAll()
                         .requestMatchers("/search/**").permitAll()
 
                         .anyRequest().authenticated()
