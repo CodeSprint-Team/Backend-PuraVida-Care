@@ -45,12 +45,16 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").permitAll()
                         .requestMatchers("/users/**").permitAll()
+
+                        .requestMatchers("/support-products/**").permitAll()
+
                         .requestMatchers(HttpMethod.GET,    "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.POST,   "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.PUT,    "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH,  "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/booking/**").permitAll()
                         .requestMatchers("/search/**").permitAll()
+
 
                         .anyRequest().authenticated()
                 )
