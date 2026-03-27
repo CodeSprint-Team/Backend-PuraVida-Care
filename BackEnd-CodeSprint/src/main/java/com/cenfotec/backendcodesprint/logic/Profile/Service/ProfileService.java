@@ -3,6 +3,7 @@ package com.cenfotec.backendcodesprint.logic.Profile.Service;
 import com.cenfotec.backendcodesprint.logic.Model.*;
 import com.cenfotec.backendcodesprint.logic.Profile.DTO.*;
 import com.cenfotec.backendcodesprint.logic.Profile.Repository.*;
+import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,8 @@ public class ProfileService {
     private final CareServiceRepository        careServiceRepo;
     private final ReviewRepository             reviewRepo;
     private final CareRelationshipRepository   careRelRepo;
+    private final UserRepository               userRepository;
+    private final ProviderTypeRepository       providerTypeRepo;
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new Locale("es", "CR"));
@@ -37,6 +40,14 @@ public class ProfileService {
                 .orElseThrow(() -> new RuntimeException("Senior profile not found: " + id));
         List<FavoriteProvider> favorites = favoriteRepo.findBySeniorProfile_Id(id);
         Optional<CareRelationship> primaryRelation = careRelRepo.findBySeniorIdAndIsPrimary(id, true);
+        return mapToSeniorResponse(p, favorites, primaryRelation.orElse(null));
+    }
+
+    public SeniorProfileResponseDTO getSeniorProfileByUserId(Long userId) {
+        SeniorProfile p = seniorRepo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Senior profile not found for user: " + userId));
+        List<FavoriteProvider> favorites = favoriteRepo.findBySeniorProfile_Id(p.getId());
+        Optional<CareRelationship> primaryRelation = careRelRepo.findBySeniorIdAndIsPrimary(p.getId(), true);
         return mapToSeniorResponse(p, favorites, primaryRelation.orElse(null));
     }
 
@@ -96,6 +107,35 @@ public class ProfileService {
                 primaryRelation.orElse(null));
     }
 
+    @Transactional
+    public SeniorProfileResponseDTO createSeniorProfile(SeniorProfileCreateDTO dto) {
+        User user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found: " + dto.getUserId()));
+
+        if (seniorRepo.existsByUser_Id(dto.getUserId())) {
+            throw new RuntimeException("El usuario ya tiene un perfil de adulto mayor");
+        }
+
+        SeniorProfile p = new SeniorProfile();
+        p.setUser(user);
+        p.setAge(dto.getAge());
+        p.setAddress(dto.getAddress());
+        p.setPhone(dto.getPhone());
+        p.setProfileImage(dto.getProfileImage());
+        p.setFamilyMember(dto.getFamilyMember());
+        p.setFamilyRelation(dto.getFamilyRelation());
+        p.setEmergencyContactName(dto.getEmergencyContactName());
+        p.setEmergencyContactPhone(dto.getEmergencyContactPhone());
+        p.setEmergencyRelation(dto.getEmergencyRelation());
+        p.setMobilityNotes(dto.getMobilityNotes());
+        p.setCarePreference(dto.getCarePreference());
+        p.setHealthObservation(dto.getHealthObservation());
+        p.setAllergies(dto.getAllergies());
+
+        SeniorProfile saved = seniorRepo.save(p);
+        return mapToSeniorResponse(saved, List.of(), null);
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // CLIENT
     // ═══════════════════════════════════════════════════════════════
@@ -103,6 +143,12 @@ public class ProfileService {
     public ClientProfileResponseDTO getClientProfile(Long id) {
         return mapToClientResponse(clientRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client profile not found: " + id)));
+    }
+
+    public ClientProfileResponseDTO getClientProfileByUserId(Long userId) {
+        ClientProfile p = clientRepo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Client profile not found for user: " + userId));
+        return mapToClientResponse(p);
     }
 
     @Transactional
@@ -123,6 +169,36 @@ public class ProfileService {
         return mapToClientResponse(clientRepo.save(p));
     }
 
+    @Transactional
+    public ClientProfileResponseDTO createClientProfile(ClientProfileCreateDTO dto) {
+        User user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found: " + dto.getUserId()));
+
+        if (clientRepo.existsByUser_Id(dto.getUserId())) {
+            throw new RuntimeException("El usuario ya tiene un perfil de cliente");
+        }
+
+        ClientProfile p = new ClientProfile();
+        p.setUser(user);
+        p.setPhone(dto.getPhone());
+        p.setNotes(dto.getNotes());
+        p.setProfileImage(dto.getProfileImage());
+        p.setRelationToSenior(dto.getRelationToSenior());
+        p.setEmergencyContactName(dto.getEmergencyContactName());
+        p.setEmergencyContactRelation(dto.getEmergencyContactRelation());
+        p.setEmergencyContactPhone(dto.getEmergencyContactPhone());
+        p.setImportantNotes(dto.getImportantNotes());
+
+        ClientProfile saved = clientRepo.save(p);
+        return mapToClientResponse(saved);
+    }
+
+    public ClientProfileResponseDTO getClientProfileByEmail(String email) {
+        ClientProfile p = clientRepo.findByUserEmail(email)
+                .orElseThrow(() -> new RuntimeException("Client profile not found for email: " + email));
+        return mapToClientResponse(p);
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // PROVIDER
     // ═══════════════════════════════════════════════════════════════
@@ -133,6 +209,15 @@ public class ProfileService {
         List<CareService> services = careServiceRepo
                 .findByProviderProfile_IdAndPublicationState(id, "published");
         List<Review> reviews = reviewRepo.findByProviderProfile_Id(id);
+        return mapToProviderResponse(p, services, reviews);
+    }
+
+    public ProviderProfileResponseDTO getProviderProfileByUserId(Long userId) {
+        ProviderProfile p = providerRepo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Provider profile not found for user: " + userId));
+        List<CareService> services = careServiceRepo
+                .findByProviderProfile_IdAndPublicationState(p.getId(), "published");
+        List<Review> reviews = reviewRepo.findByProviderProfile_Id(p.getId());
         return mapToProviderResponse(p, services, reviews);
     }
 
@@ -159,6 +244,35 @@ public class ProfileService {
         return mapToProviderResponse(saved, services, reviews);
     }
 
+    @Transactional
+    public ProviderProfileResponseDTO createProviderProfile(ProviderProfileCreateDTO dto) {
+        User user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + dto.getUserId()));
+
+        if (providerRepo.existsByUser_Id(dto.getUserId())) {
+            throw new RuntimeException("El usuario ya tiene un perfil de proveedor");
+        }
+
+        ProviderType providerType = providerTypeRepo.findById(dto.getProviderTypeId())
+                .orElseThrow(() -> new RuntimeException("Tipo de proveedor no encontrado: " + dto.getProviderTypeId()));
+
+        ProviderProfile p = new ProviderProfile();
+        p.setUser(user);
+        p.setProviderType(providerType);
+        p.setExperienceDescription(dto.getExperienceDescription());
+        p.setExperienceYears(dto.getExperienceYears());
+        p.setProviderState(dto.getProviderState() != null ? dto.getProviderState() : "activo");
+        p.setBio(dto.getBio());
+        p.setZone(dto.getZone());
+        p.setPhone(dto.getPhone());
+        p.setProfileImage(dto.getProfileImage());
+        p.setVerified(dto.getVerified() != null ? dto.getVerified() : false);
+        p.setInsuranceActive(dto.getInsuranceActive() != null ? dto.getInsuranceActive() : false);
+
+        ProviderProfile saved = providerRepo.save(p);
+        return mapToProviderResponse(saved, List.of(), List.of());
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // MAPPERS
     // ═══════════════════════════════════════════════════════════════
@@ -175,14 +289,12 @@ public class ProfileService {
         d.setPhone(p.getPhone());
         d.setProfileImage(p.getProfileImage());
 
-        // ── Familiar responsable desde CareRelationship ───────────
         if (primaryRelation != null) {
             ClientProfile cp = primaryRelation.getClientProfile();
             d.setFamilyMember(cp.getUser().getUserName() + " " + cp.getUser().getLastName());
             d.setFamilyRelation(primaryRelation.getRelationshipType());
-            d.setFamilyPhone(cp.getPhone());   // ✅ teléfono real del familiar
+            d.setFamilyPhone(cp.getPhone());
         } else {
-            // Fallback a campos manuales
             d.setFamilyMember(p.getFamilyMember());
             d.setFamilyRelation(p.getFamilyRelation());
             d.setFamilyPhone(null);

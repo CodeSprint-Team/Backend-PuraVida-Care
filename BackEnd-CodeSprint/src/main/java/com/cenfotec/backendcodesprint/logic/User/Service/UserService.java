@@ -83,6 +83,17 @@ public class UserService {
         return userMapper.toResponseDto(savedUser);
     }
 
+    public User loginWithEmailAndPassword(String email, String password) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Credenciales incorrectas"));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Credenciales incorrectas");
+        }
+
+        return user;
+    }
+
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));

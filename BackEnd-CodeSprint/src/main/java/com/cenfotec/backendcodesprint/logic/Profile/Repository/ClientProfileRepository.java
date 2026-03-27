@@ -12,4 +12,9 @@ public interface ClientProfileRepository extends JpaRepository<ClientProfile, Lo
 
     @Query("SELECT c FROM ClientProfile c JOIN FETCH c.user WHERE c.user.id = :userId")
     Optional<ClientProfile> findByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT c FROM ClientProfile c JOIN FETCH c.user WHERE c.user.email = :email")
+    Optional<ClientProfile> findByUserEmail(@Param("email") String email);
+
+    boolean existsByUser_Id(Long userId);
 }

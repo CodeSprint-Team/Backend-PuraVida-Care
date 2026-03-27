@@ -12,4 +12,5 @@ public interface SeniorProfileRepository extends JpaRepository<SeniorProfile, Lo
 
     @Query("SELECT s FROM SeniorProfile s JOIN FETCH s.user WHERE s.user.id = :userId")
     Optional<SeniorProfile> findByUserId(@Param("userId") Long userId);
+    boolean existsByUser_Id(Long userId);
 }

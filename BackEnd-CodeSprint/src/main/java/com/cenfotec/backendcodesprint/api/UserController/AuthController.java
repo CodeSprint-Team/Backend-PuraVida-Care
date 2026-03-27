@@ -7,10 +7,12 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;
@@ -37,10 +39,14 @@ public class AuthController {
     }
 
     @GetMapping("/google/url")
-    public ResponseEntity<Map<String, String>> getGoogleAuthUrl() {
-        Map<String, String> response = new HashMap<>();
-        response.put("url", "http://localhost:8081/api/v1/auth/login/oauth2/code/google");
-        return ResponseEntity.ok(response);
+    public void getGoogleAuthUrl(HttpServletResponse response) throws IOException {
+        String googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth?" +
+                "client_id=" + googleClientId +
+                "&redirect_uri=http://localhost:8081/api/v1/auth/login/oauth2/code/google" +
+                "&response_type=code" +
+                "&scope=email profile";
+
+        response.sendRedirect(googleAuthUrl);
     }
 
     @PostMapping("/google/callback")
@@ -80,7 +86,13 @@ public class AuthController {
                     subject,
                     picture
             );
-
+               // Bloqueo: admin desactivó al usuario
+            if
+            ("inactive".equalsIgnoreCase(user.getUserState())) {
+                return
+                        ResponseEntity.status(403).body(Map.of("error",
+                                "Cuenta desactivada. Contactá al soporte."));
+            }
             // 5. Generar tu propio JWT
             String jwtToken = jwtTokenProvider.generateToken(user);
 
@@ -130,5 +142,41 @@ public class AuthController {
         response.put("GOOGLE_CLIENT_ID", googleClientId);
         response.put("GOOGLE_CLIENT_ID_ENV", System.getenv("GOOGLE_CLIENT_ID"));
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            String password = request.get("password");
+
+            User user = userService.loginWithEmailAndPassword(email, password);
+
+            if ("inactive".equalsIgnoreCase(user.getUserState())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Cuenta desactivada. Contactá al soporte."));
+            }
+
+            String jwtToken = jwtTokenProvider.generateToken(user);
+
+            return ResponseEntity.ok(Map.of(
+                    "token", jwtToken,
+                    "email", user.getEmail(),
+                    "name", user.getUserName() + " " + user.getLastName(),
+                    "userId", user.getId(),
+                    "role", user.getRole().getRoleName()
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/google/config")
+    public ResponseEntity<Map<String, String>> getGoogleConfig() {
+        Map<String, String> config = new HashMap<>();
+        config.put("clientId", googleClientId);
+        config.put("clientIdLength", String.valueOf(googleClientId != null ? googleClientId.length() : 0));
+        config.put("redirectUri", "http://localhost:8081/api/v1/auth/login/oauth2/code/google");
+        config.put("authUrl", "https://accounts.google.com/o/oauth2/v2/auth");
+        return ResponseEntity.ok(config);
     }
 }
