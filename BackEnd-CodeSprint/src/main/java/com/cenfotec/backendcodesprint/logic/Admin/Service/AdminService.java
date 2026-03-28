@@ -98,24 +98,28 @@ public class AdminService {
                 return adminUserMapper.toDTO(user);
             }
             userRepo.updateUserState(userId, "active");
-            emailService.sendUserActivationEmail(
-                    user.getEmail(),
-                    user.getUserName() + " " + user.getLastName()
-            );
-
+            try {
+                emailService.sendUserActivationEmail(
+                        user.getEmail(),
+                        user.getUserName() + " " + user.getLastName()
+                );
+            } catch (Exception e) {
+                System.out.println("No se pudo enviar correo a: " + user.getEmail() + " - " + e.getMessage());
+            }
         } else if ("deactivate".equalsIgnoreCase(dto.getAction())) {
             if ("inactive".equalsIgnoreCase(user.getUserState())) {
                 return adminUserMapper.toDTO(user);
             }
             userRepo.updateUserState(userId, "inactive");
-            emailService.sendUserDeactivationEmail(
-                    user.getEmail(),
-                    user.getUserName() + " " + user.getLastName(),
-                    dto.getReason()
-            );
-
-        } else {
-            throw new RuntimeException("Action must be 'activate' or 'deactivate'");
+            try {
+                emailService.sendUserDeactivationEmail(
+                        user.getEmail(),
+                        user.getUserName() + " " + user.getLastName(),
+                        dto.getReason()
+                );
+            } catch (Exception e) {
+                System.out.println("No se pudo enviar correo a: " + user.getEmail() + " - " + e.getMessage());
+            }
         }
 
         user.setUserState("activate".equalsIgnoreCase(dto.getAction()) ? "active" : "inactive");
@@ -145,6 +149,12 @@ public class AdminService {
         }
 
         return adminCareServiceMapper.toDTO(careServiceRepo.save(careService));
+    }
+    public List<CareServicePendingDTO> getAllCareServices() {
+        return careServiceRepo.findAll()
+                .stream()
+                .map(adminCareServiceMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
 }
