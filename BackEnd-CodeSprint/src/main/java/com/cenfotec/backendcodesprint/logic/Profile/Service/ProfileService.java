@@ -5,6 +5,7 @@ import com.cenfotec.backendcodesprint.logic.Profile.DTO.*;
 import com.cenfotec.backendcodesprint.logic.Profile.Repository.*;
 import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ public class ProfileService {
     private final CareRelationshipRepository   careRelRepo;
     private final UserRepository               userRepository;
     private final ProviderTypeRepository       providerTypeRepo;
+    private final PasswordEncoder              passwordEncoder;
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new Locale("es", "CR"));
@@ -145,7 +147,6 @@ public class ProfileService {
                 .orElseThrow(() -> new RuntimeException("Client profile not found: " + id)));
     }
 
-    // Devuelve Optional — no explota si no existe el perfil
     public Optional<ClientProfileResponseDTO> getClientProfileByUserIdOptional(Long userId) {
         return clientRepo.findByUserId(userId).map(this::mapToClientResponse);
     }
@@ -279,6 +280,62 @@ public class ProfileService {
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // ADMIN
+    // ═══════════════════════════════════════════════════════════════
+
+    public AdminProfileResponseDTO getAdminProfileByUserId(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Admin not found: " + userId));
+        return mapToAdminResponse(user);
+    }
+
+    @Transactional
+    public AdminProfileResponseDTO updateAdminProfile(Long userId, AdminProfileUpdateDTO dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Admin not found: " + userId));
+
+        // Datos personales
+        updateUserFields(user, dto.getUserName(), dto.getLastName(), dto.getEmail());
+        if (dto.getPhotoUrl() != null) user.setPhotoUrl(dto.getPhotoUrl());
+
+        // Cambio de contraseña (solo si viene currentPassword)
+        if (dto.getCurrentPassword() != null && !dto.getCurrentPassword().isBlank()) {
+            if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+                throw new RuntimeException("La contraseña actual es incorrecta");
+            }
+            if (dto.getNewPassword() == null || dto.getNewPassword().isBlank()) {
+                throw new RuntimeException("La nueva contraseña no puede estar vacía");
+            }
+            user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        }
+
+        return mapToAdminResponse(userRepository.save(user));
+    }
+
+    // ── Mapper ─────────────────────────────────────────────────────
+
+    private AdminProfileResponseDTO mapToAdminResponse(User user) {
+        AdminProfileResponseDTO d = new AdminProfileResponseDTO();
+        d.setId(user.getId());
+        d.setFullName(user.getUserName() + " " + user.getLastName());
+        d.setEmail(user.getEmail());
+        d.setRole(user.getRole() != null ? user.getRole().getRoleName() : "ADMIN");
+        d.setPhotoUrl(user.getPhotoUrl());
+        d.setCreatedAt(user.getCreated());
+        d.setSystemStats(buildSystemStats());
+        return d;
+    }
+
+    private AdminProfileResponseDTO.SystemStatsDTO buildSystemStats() {
+        AdminProfileResponseDTO.SystemStatsDTO stats = new AdminProfileResponseDTO.SystemStatsDTO();
+        stats.setTotalUsers(userRepository.count());
+        stats.setTotalProviders(providerRepo.count());
+        stats.setActiveServices(careServiceRepo.countByPublicationState("published"));
+        stats.setTotalReviews(reviewRepo.count());
+        return stats;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // MAPPERS
     // ═══════════════════════════════════════════════════════════════
 
@@ -401,6 +458,10 @@ public class ProfileService {
 
         return d;
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SHARED HELPERS
+    // ═══════════════════════════════════════════════════════════════
 
     private void updateUserFields(User u, String userName, String lastName, String email) {
         u.setUserName(userName);

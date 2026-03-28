@@ -70,7 +70,6 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.getClientProfile(id));
     }
 
-    // Endpoint seguro: devuelve 404 con mensaje si no existe el perfil
     @GetMapping("/client/by-user/{userId}")
     public ResponseEntity<?> getClientProfileByUserId(@PathVariable Long userId) {
         Optional<ClientProfileResponseDTO> profile =
@@ -131,5 +130,21 @@ public class ProfileController {
             @Valid @RequestBody ProviderProfileCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(profileService.createProviderProfile(dto));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ADMIN
+    // ═══════════════════════════════════════════════════════════════
+
+    @GetMapping("/admin/by-user/{userId}")
+    public ResponseEntity<AdminProfileResponseDTO> getAdminProfile(@PathVariable Long userId) {
+        return ResponseEntity.ok(profileService.getAdminProfileByUserId(userId));
+    }
+
+    @PutMapping("/admin/by-user/{userId}")
+    public ResponseEntity<AdminProfileResponseDTO> updateAdminProfile(
+            @PathVariable Long userId,
+            @Valid @RequestBody AdminProfileUpdateDTO dto) {
+        return ResponseEntity.ok(profileService.updateAdminProfile(userId, dto));
     }
 }
