@@ -53,14 +53,21 @@ public class AdminService {
             User user = provider.getUser();
             user.setUserState("active");
             userRepo.save(user);
-            emailService.sendApprovalEmail(email, providerName);
+            try {
+                emailService.sendApprovalEmail(email, providerName);
+            } catch (Exception e) {
+            }
         } else if ("reject".equalsIgnoreCase(dto.getAction())) {
             provider.setProviderState("rejected");
-            emailService.sendRejectionEmail(email, providerName, dto.getRejectionReason());
+            try {
+                emailService.sendRejectionEmail(email, providerName, dto.getRejectionReason());
+            } catch (Exception e) {
+            }
         } else if ("request_info".equalsIgnoreCase(dto.getAction())) {
-            emailService.sendInfoRequestEmail(email, providerName, dto.getInfoMessage());
-        } else {
-            throw new RuntimeException("Action must be 'approve', 'reject' or 'request_info'");
+            try {
+                emailService.sendInfoRequestEmail(email, providerName, dto.getInfoMessage());
+            } catch (Exception e) {
+            }
         }
 
         return mapToDTO(providerRepo.save(provider));
@@ -104,7 +111,6 @@ public class AdminService {
                         user.getUserName() + " " + user.getLastName()
                 );
             } catch (Exception e) {
-                System.out.println("No se pudo enviar correo a: " + user.getEmail() + " - " + e.getMessage());
             }
         } else if ("deactivate".equalsIgnoreCase(dto.getAction())) {
             if ("inactive".equalsIgnoreCase(user.getUserState())) {
@@ -118,7 +124,6 @@ public class AdminService {
                         dto.getReason()
                 );
             } catch (Exception e) {
-                System.out.println("No se pudo enviar correo a: " + user.getEmail() + " - " + e.getMessage());
             }
         }
 
