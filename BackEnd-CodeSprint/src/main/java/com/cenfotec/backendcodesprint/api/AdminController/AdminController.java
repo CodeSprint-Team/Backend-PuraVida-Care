@@ -55,5 +55,9 @@ public class AdminController {
             @RequestBody ReviewCareServiceDTO dto) {
         return ResponseEntity.ok(adminService.reviewCareService(id, dto));
     }
+    @GetMapping("/services")
+    public ResponseEntity<List<CareServicePendingDTO>> getAllCareServices() {
+        return ResponseEntity.ok(adminService.getAllCareServices());
+    }
 
 }

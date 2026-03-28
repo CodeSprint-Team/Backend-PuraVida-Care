@@ -8,9 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -350,7 +352,15 @@ public class ProfileService {
         d.setProviderType(p.getProviderType() != null ? p.getProviderType().getTypeName() : null);
         d.setExperienceDescription(p.getExperienceDescription());
         d.setExperienceYears(p.getExperienceYears());
-        d.setAverageRating(p.getAverageRating());
+        if (!reviews.isEmpty()) {
+            double avg = reviews.stream()
+                    .mapToDouble(r -> r.getRanking().doubleValue())
+                    .average()
+                    .orElse(0.0);
+            d.setAverageRating(BigDecimal.valueOf(Math.round(avg * 10.0) / 10.0));
+        } else {
+            d.setAverageRating(p.getAverageRating());
+        }
         d.setProviderState(p.getProviderState());
         d.setBio(p.getBio());
         d.setZone(p.getZone());
@@ -393,6 +403,19 @@ public class ProfileService {
             rv.setDate(r.getCreated() != null ? r.getCreated().format(DATE_FMT) : "");
             return rv;
         }).collect(Collectors.toList()));
+
+
+        Map<Integer, Double> distribution = new java.util.LinkedHashMap<>();
+        int total = reviews.size();
+        for (int i = 5; i >= 1; i--) {
+            final int star = i;
+            long count = reviews.stream()
+                    .filter(r -> r.getRanking().intValue() == star)
+                    .count();
+            double pct = total > 0 ? (count * 100.0) / total : 0;
+            distribution.put(star, Math.round(pct * 10.0) / 10.0);
+        }
+        d.setRatingDistribution(distribution);
 
         return d;
     }
