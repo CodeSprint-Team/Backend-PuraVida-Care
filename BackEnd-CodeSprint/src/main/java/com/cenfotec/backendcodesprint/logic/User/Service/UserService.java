@@ -1,8 +1,6 @@
 package com.cenfotec.backendcodesprint.logic.User.Service;
 
-import com.cenfotec.backendcodesprint.logic.Exeptions.DuplicateResourceException;
-import com.cenfotec.backendcodesprint.logic.Model.Role;
-import com.cenfotec.backendcodesprint.logic.Model.User;
+import com.cenfotec.backendcodesprint.logic.Model.*;
 import com.cenfotec.backendcodesprint.logic.User.DTO.Request.RegisterUserRequestDto;
 import com.cenfotec.backendcodesprint.logic.User.DTO.Response.UserResponseDto;
 import com.cenfotec.backendcodesprint.logic.User.Mapper.UserMapper;
@@ -11,7 +9,9 @@ import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -31,9 +31,10 @@ public class UserService {
         this.userMapper = userMapper;
     }
 
+    // Retorna [User, Boolean isNewUser]
     @Transactional
-    public User createOrUpdateGoogleUser(String email, String firstName, String lastName,
-                                         String googleId, String photoUrl) {
+    public Object[] createOrUpdateGoogleUser(String email, String firstName, String lastName,
+                                             String googleId, String photoUrl, Long roleId) {
         Optional<User> existingUser = userRepository.findByEmail(email);
 
         if (existingUser.isPresent()) {
@@ -41,10 +42,19 @@ public class UserService {
             user.setGoogleId(googleId);
             user.setPhotoUrl(photoUrl);
             user.setProvider("google");
-            return userRepository.save(user);
+            User saved = userRepository.save(user);
+            return new Object[]{ saved, false };
         } else {
-            Role defaultRole = roleRepository.findByRoleName("cliente")
-                    .orElseThrow(() -> new RuntimeException("Role 'cliente' not found"));
+            Role role;
+            if (roleId != null) {
+                role = roleRepository.findById(roleId)
+                        .orElseThrow(() -> new RuntimeException("Role not found: " + roleId));
+            } else {
+                role = roleRepository.findByRoleName("CLIENT")
+                        .orElseThrow(() -> new RuntimeException("Role 'CLIENT' not found"));
+            }
+
+            String randomPassword = passwordEncoder.encode(UUID.randomUUID().toString());
 
             User newUser = new User();
             newUser.setEmail(email);
@@ -53,18 +63,32 @@ public class UserService {
             newUser.setGoogleId(googleId);
             newUser.setPhotoUrl(photoUrl);
             newUser.setProvider("google");
-            newUser.setUserState("PENDIENTE_VERIFICACION");
-            newUser.setRole(defaultRole);
-            newUser.setPassword("");
+            newUser.setUserState("active");
+            newUser.setRole(role);
+            newUser.setPassword(randomPassword);
 
-            return userRepository.save(newUser);
+            User saved = userRepository.save(newUser);
+            return new Object[]{ saved, true };
         }
+    }
+
+    @Transactional
+    public UserResponseDto updateUserRole(Long userId, Long roleId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + roleId));
+
+        user.setRole(role);
+        User saved = userRepository.save(user);
+        return userMapper.toResponseDto(saved);
     }
 
     @Transactional
     public UserResponseDto registerUser(RegisterUserRequestDto requestDto) {
         if (userRepository.existsByEmail(requestDto.getEmail())) {
-            throw new DuplicateResourceException("Correo ya registrado");
+            throw new RuntimeException("Ya existe un usuario con ese correo");
         }
 
         Role role = roleRepository.findById(requestDto.getRoleId())
@@ -98,5 +122,4 @@ public class UserService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
-
 }

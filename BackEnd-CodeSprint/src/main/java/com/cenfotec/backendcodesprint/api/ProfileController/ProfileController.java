@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/profiles")
 @CrossOrigin(origins = "")
@@ -67,9 +70,20 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.getClientProfile(id));
     }
 
+    // Endpoint seguro: devuelve 404 con mensaje si no existe el perfil
     @GetMapping("/client/by-user/{userId}")
-    public ResponseEntity<ClientProfileResponseDTO> getClientProfileByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(profileService.getClientProfileByUserId(userId));
+    public ResponseEntity<?> getClientProfileByUserId(@PathVariable Long userId) {
+        Optional<ClientProfileResponseDTO> profile =
+                profileService.getClientProfileByUserIdOptional(userId);
+
+        if (profile.isPresent()) {
+            return ResponseEntity.ok(profile.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "message", "Client profile not found",
+                    "profileCompleted", false
+            ));
+        }
     }
 
     @PutMapping("/client/{id}")

@@ -124,8 +124,8 @@ public class ProfileService {
         p.setProfileImage(dto.getProfileImage());
         p.setFamilyMember(dto.getFamilyMember());
         p.setFamilyRelation(dto.getFamilyRelation());
-        p.setEmergencyContactName(dto.getEmergencyContactName());
-        p.setEmergencyContactPhone(dto.getEmergencyContactPhone());
+        p.setEmergencyContactName(dto.getEmergencyContactName() != null ? dto.getEmergencyContactName() : "");
+        p.setEmergencyContactPhone(dto.getEmergencyContactPhone() != null ? dto.getEmergencyContactPhone() : "");
         p.setEmergencyRelation(dto.getEmergencyRelation());
         p.setMobilityNotes(dto.getMobilityNotes());
         p.setCarePreference(dto.getCarePreference());
@@ -143,6 +143,11 @@ public class ProfileService {
     public ClientProfileResponseDTO getClientProfile(Long id) {
         return mapToClientResponse(clientRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client profile not found: " + id)));
+    }
+
+    // Devuelve Optional — no explota si no existe el perfil
+    public Optional<ClientProfileResponseDTO> getClientProfileByUserIdOptional(Long userId) {
+        return clientRepo.findByUserId(userId).map(this::mapToClientResponse);
     }
 
     public ClientProfileResponseDTO getClientProfileByUserId(Long userId) {
@@ -180,7 +185,7 @@ public class ProfileService {
 
         ClientProfile p = new ClientProfile();
         p.setUser(user);
-        p.setPhone(dto.getPhone());
+        p.setPhone(dto.getPhone() != null ? dto.getPhone() : "");
         p.setNotes(dto.getNotes());
         p.setProfileImage(dto.getProfileImage());
         p.setRelationToSenior(dto.getRelationToSenior());
@@ -259,9 +264,9 @@ public class ProfileService {
         ProviderProfile p = new ProviderProfile();
         p.setUser(user);
         p.setProviderType(providerType);
-        p.setExperienceDescription(dto.getExperienceDescription());
-        p.setExperienceYears(dto.getExperienceYears());
-        p.setProviderState(dto.getProviderState() != null ? dto.getProviderState() : "activo");
+        p.setExperienceDescription(dto.getExperienceDescription() != null ? dto.getExperienceDescription() : "");
+        p.setExperienceYears(dto.getExperienceYears() != null ? dto.getExperienceYears() : 0);
+        p.setProviderState(dto.getProviderState() != null ? dto.getProviderState() : "pending");
         p.setBio(dto.getBio());
         p.setZone(dto.getZone());
         p.setPhone(dto.getPhone());
