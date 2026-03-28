@@ -5,6 +5,7 @@ import com.cenfotec.backendcodesprint.logic.Profile.DTO.*;
 import com.cenfotec.backendcodesprint.logic.Profile.Repository.*;
 import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ public class ProfileService {
     private final CareRelationshipRepository   careRelRepo;
     private final UserRepository               userRepository;
     private final ProviderTypeRepository       providerTypeRepo;
+    private final PasswordEncoder              passwordEncoder;
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new Locale("es", "CR"));
@@ -126,8 +128,8 @@ public class ProfileService {
         p.setProfileImage(dto.getProfileImage());
         p.setFamilyMember(dto.getFamilyMember());
         p.setFamilyRelation(dto.getFamilyRelation());
-        p.setEmergencyContactName(dto.getEmergencyContactName());
-        p.setEmergencyContactPhone(dto.getEmergencyContactPhone());
+        p.setEmergencyContactName(dto.getEmergencyContactName() != null ? dto.getEmergencyContactName() : "");
+        p.setEmergencyContactPhone(dto.getEmergencyContactPhone() != null ? dto.getEmergencyContactPhone() : "");
         p.setEmergencyRelation(dto.getEmergencyRelation());
         p.setMobilityNotes(dto.getMobilityNotes());
         p.setCarePreference(dto.getCarePreference());
@@ -145,6 +147,10 @@ public class ProfileService {
     public ClientProfileResponseDTO getClientProfile(Long id) {
         return mapToClientResponse(clientRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client profile not found: " + id)));
+    }
+
+    public Optional<ClientProfileResponseDTO> getClientProfileByUserIdOptional(Long userId) {
+        return clientRepo.findByUserId(userId).map(this::mapToClientResponse);
     }
 
     public ClientProfileResponseDTO getClientProfileByUserId(Long userId) {
@@ -182,7 +188,7 @@ public class ProfileService {
 
         ClientProfile p = new ClientProfile();
         p.setUser(user);
-        p.setPhone(dto.getPhone());
+        p.setPhone(dto.getPhone() != null ? dto.getPhone() : "");
         p.setNotes(dto.getNotes());
         p.setProfileImage(dto.getProfileImage());
         p.setRelationToSenior(dto.getRelationToSenior());
@@ -261,9 +267,9 @@ public class ProfileService {
         ProviderProfile p = new ProviderProfile();
         p.setUser(user);
         p.setProviderType(providerType);
-        p.setExperienceDescription(dto.getExperienceDescription());
-        p.setExperienceYears(dto.getExperienceYears());
-        p.setProviderState(dto.getProviderState() != null ? dto.getProviderState() : "activo");
+        p.setExperienceDescription(dto.getExperienceDescription() != null ? dto.getExperienceDescription() : "");
+        p.setExperienceYears(dto.getExperienceYears() != null ? dto.getExperienceYears() : 0);
+        p.setProviderState(dto.getProviderState() != null ? dto.getProviderState() : "pending");
         p.setBio(dto.getBio());
         p.setZone(dto.getZone());
         p.setPhone(dto.getPhone());
@@ -273,6 +279,62 @@ public class ProfileService {
 
         ProviderProfile saved = providerRepo.save(p);
         return mapToProviderResponse(saved, List.of(), List.of());
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ADMIN
+    // ═══════════════════════════════════════════════════════════════
+
+    public AdminProfileResponseDTO getAdminProfileByUserId(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Admin not found: " + userId));
+        return mapToAdminResponse(user);
+    }
+
+    @Transactional
+    public AdminProfileResponseDTO updateAdminProfile(Long userId, AdminProfileUpdateDTO dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Admin not found: " + userId));
+
+        // Datos personales
+        updateUserFields(user, dto.getUserName(), dto.getLastName(), dto.getEmail());
+        if (dto.getPhotoUrl() != null) user.setPhotoUrl(dto.getPhotoUrl());
+
+        // Cambio de contraseña (solo si viene currentPassword)
+        if (dto.getCurrentPassword() != null && !dto.getCurrentPassword().isBlank()) {
+            if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+                throw new RuntimeException("La contraseña actual es incorrecta");
+            }
+            if (dto.getNewPassword() == null || dto.getNewPassword().isBlank()) {
+                throw new RuntimeException("La nueva contraseña no puede estar vacía");
+            }
+            user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        }
+
+        return mapToAdminResponse(userRepository.save(user));
+    }
+
+    // ── Mapper ─────────────────────────────────────────────────────
+
+    private AdminProfileResponseDTO mapToAdminResponse(User user) {
+        AdminProfileResponseDTO d = new AdminProfileResponseDTO();
+        d.setId(user.getId());
+        d.setFullName(user.getUserName() + " " + user.getLastName());
+        d.setEmail(user.getEmail());
+        d.setRole(user.getRole() != null ? user.getRole().getRoleName() : "ADMIN");
+        d.setPhotoUrl(user.getPhotoUrl());
+        d.setCreatedAt(user.getCreated());
+        d.setSystemStats(buildSystemStats());
+        return d;
+    }
+
+    private AdminProfileResponseDTO.SystemStatsDTO buildSystemStats() {
+        AdminProfileResponseDTO.SystemStatsDTO stats = new AdminProfileResponseDTO.SystemStatsDTO();
+        stats.setTotalUsers(userRepository.count());
+        stats.setTotalProviders(providerRepo.count());
+        stats.setActiveServices(careServiceRepo.countByPublicationState("published"));
+        stats.setTotalReviews(reviewRepo.count());
+        return stats;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -419,6 +481,10 @@ public class ProfileService {
 
         return d;
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SHARED HELPERS
+    // ═══════════════════════════════════════════════════════════════
 
     private void updateUserFields(User u, String userName, String lastName, String email) {
         u.setUserName(userName);

@@ -11,8 +11,12 @@ import java.util.Optional;
 
 @Repository
 public interface CareServiceRepository extends JpaRepository<CareService, Long> {
+
     List<CareService> findByProviderProfile_Id(Long providerProfileId);
+
     List<CareService> findByProviderProfile_IdAndPublicationState(Long providerProfileId, String state);
+
+    long countByPublicationState(String publicationState);
 
     @Query("""
             SELECT cs FROM CareService cs

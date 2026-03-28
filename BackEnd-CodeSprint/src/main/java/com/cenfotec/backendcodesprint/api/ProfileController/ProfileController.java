@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/profiles")
 @CrossOrigin(origins = "")
@@ -68,8 +71,18 @@ public class ProfileController {
     }
 
     @GetMapping("/client/by-user/{userId}")
-    public ResponseEntity<ClientProfileResponseDTO> getClientProfileByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(profileService.getClientProfileByUserId(userId));
+    public ResponseEntity<?> getClientProfileByUserId(@PathVariable Long userId) {
+        Optional<ClientProfileResponseDTO> profile =
+                profileService.getClientProfileByUserIdOptional(userId);
+
+        if (profile.isPresent()) {
+            return ResponseEntity.ok(profile.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "message", "Client profile not found",
+                    "profileCompleted", false
+            ));
+        }
     }
 
     @PutMapping("/client/{id}")
@@ -117,5 +130,21 @@ public class ProfileController {
             @Valid @RequestBody ProviderProfileCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(profileService.createProviderProfile(dto));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ADMIN
+    // ═══════════════════════════════════════════════════════════════
+
+    @GetMapping("/admin/by-user/{userId}")
+    public ResponseEntity<AdminProfileResponseDTO> getAdminProfile(@PathVariable Long userId) {
+        return ResponseEntity.ok(profileService.getAdminProfileByUserId(userId));
+    }
+
+    @PutMapping("/admin/by-user/{userId}")
+    public ResponseEntity<AdminProfileResponseDTO> updateAdminProfile(
+            @PathVariable Long userId,
+            @Valid @RequestBody AdminProfileUpdateDTO dto) {
+        return ResponseEntity.ok(profileService.updateAdminProfile(userId, dto));
     }
 }

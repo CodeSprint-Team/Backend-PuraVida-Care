@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/users")
 @CrossOrigin(origins = "*")
@@ -25,6 +27,15 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
+    @PatchMapping("/{userId}/role")
+    public ResponseEntity<UserResponseDto> updateUserRole(
+            @PathVariable Long userId,
+            @RequestBody Map<String, Long> body) {
+        Long roleId = body.get("roleId");
+        if (roleId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        UserResponseDto response = userService.updateUserRole(userId, roleId);
+        return ResponseEntity.ok(response);
+    }
 }
-
-
