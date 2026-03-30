@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/support-products")
@@ -22,14 +23,14 @@ public class SupportProductController {
     private final SupportProductService supportProductService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> createPost(
+    public ResponseEntity<Map<String, String>> createPost(
             @ModelAttribute CreateSupportProductPostRequestDTO data,
             @RequestParam(value = "image", required = false) MultipartFile image
     ) {
         supportProductService.createPost(data, image);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body("Publicación creada correctamente");
+                .body(Map.of("message", "Publicación creada correctamente"));
     }
 
     @GetMapping

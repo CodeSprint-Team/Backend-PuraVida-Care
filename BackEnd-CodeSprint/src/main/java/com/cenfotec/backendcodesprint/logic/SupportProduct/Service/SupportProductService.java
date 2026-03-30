@@ -211,6 +211,8 @@ public class SupportProductService {
         dto.setLocationLng(post.getLocationLongitude());
         dto.setLocationText(post.getLocationText());
         dto.setUsageTimeText(post.getUsageTimeText());
+        dto.setImageUrl(post.getImageUrl());
+        dto.setImagePath(post.getImagePath());
 
         dto.setCreated(post.getCreated());
         dto.setUpdated(post.getUpdated());
