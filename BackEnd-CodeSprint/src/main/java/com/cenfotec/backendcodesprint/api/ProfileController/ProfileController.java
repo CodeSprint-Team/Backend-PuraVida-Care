@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -147,4 +148,45 @@ public class ProfileController {
             @Valid @RequestBody AdminProfileUpdateDTO dto) {
         return ResponseEntity.ok(profileService.updateAdminProfile(userId, dto));
     }
+
+
+    @PostMapping("/client/{clientId}/favorites/{providerProfileId}")
+    public ResponseEntity<?> addFavoriteForClient(
+            @PathVariable Long clientId,
+            @PathVariable Long providerProfileId) {
+        try {
+            profileService.addFavoriteProviderForClient(clientId, providerProfileId);
+            return ResponseEntity.ok(Map.of("message", "Proveedor guardado en favoritos"));
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("Ya estaba en favoritos")) {
+                return ResponseEntity.status(409).body(Map.of("message", "Ya estaba en favoritos"));
+            }
+            if (e.getMessage().contains("Proveedor no encontrado")) {
+                return ResponseEntity.status(404).body(Map.of("message", "Proveedor no encontrado"));
+            }
+            return ResponseEntity.status(500).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // DELETE /profiles/client/{clientId}/favorites/{providerProfileId}
+    @DeleteMapping("/client/{clientId}/favorites/{providerProfileId}")
+    public ResponseEntity<?> removeFavoriteForClient(
+            @PathVariable Long clientId,
+            @PathVariable Long providerProfileId) {
+        profileService.removeFavoriteProviderForClient(clientId, providerProfileId);
+        return ResponseEntity.ok(Map.of("message", "Proveedor eliminado de favoritos"));
+    }
+
+    // GET /profiles/client/{clientId}/favorites
+    @GetMapping("/client/{clientId}/favorites")
+    public ResponseEntity<List<Long>> getFavoritesForClient(@PathVariable Long clientId) {
+        return ResponseEntity.ok(profileService.getFavoriteProviderIdsForClient(clientId));
+    }
+
+    @GetMapping("/senior/{seniorId}/favorites/ids")
+    public ResponseEntity<List<Long>> getFavoriteIdsForSenior(@PathVariable Long seniorId) {
+        List<Long> ids = profileService.getFavoriteProviderIdsForSenior(seniorId);
+        return ResponseEntity.ok(ids);
+    }
+
 }

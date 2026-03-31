@@ -2,7 +2,6 @@ package com.cenfotec.backendcodesprint.logic.Review.Dto.Request;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.Data;
-
 import java.math.BigDecimal;
 
 @Data

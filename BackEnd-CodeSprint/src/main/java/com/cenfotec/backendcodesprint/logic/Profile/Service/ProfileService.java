@@ -4,6 +4,7 @@ import com.cenfotec.backendcodesprint.logic.Model.*;
 import com.cenfotec.backendcodesprint.logic.Profile.DTO.*;
 import com.cenfotec.backendcodesprint.logic.Profile.Repository.*;
 import com.cenfotec.backendcodesprint.logic.Review.Repository.ReviewRepository;
+
 import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -494,5 +495,50 @@ public class ProfileService {
             u.setLastName(lastName);
         }
         u.setEmail(email);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+// FAVORITOS DE CLIENTE
+// Agregar estos métodos en ProfileService.java
+// ═══════════════════════════════════════════════════════════════
+
+    @Transactional
+    public void addFavoriteProviderForClient(Long clientId, Long providerProfileId) {
+        if (favoriteRepo.existsByClientProfile_IdAndProviderProfile_Id(clientId, providerProfileId)) {
+            throw new RuntimeException("Ya estaba en favoritos");
+        }
+
+        ClientProfile client = clientRepo.findById(clientId)
+                .orElseThrow(() -> new RuntimeException("Client profile not found: " + clientId));
+        ProviderProfile provider = providerRepo.findById(providerProfileId)
+                .orElseThrow(() -> new RuntimeException("Proveedor no encontrado: " + providerProfileId));
+
+        FavoriteProvider fav = new FavoriteProvider();
+        fav.setClientProfile(client);
+        fav.setProviderProfile(provider);
+        favoriteRepo.save(fav);
+    }
+
+    @Transactional
+    public void removeFavoriteProviderForClient(Long clientId, Long providerProfileId) {
+        favoriteRepo.deleteByClientProfile_IdAndProviderProfile_Id(clientId, providerProfileId);
+    }
+
+    public boolean isFavoriteForClient(Long clientId, Long providerProfileId) {
+        return favoriteRepo.existsByClientProfile_IdAndProviderProfile_Id(clientId, providerProfileId);
+    }
+
+    public List<Long> getFavoriteProviderIdsForClient(Long clientId) {
+        return favoriteRepo.findByClientProfile_Id(clientId)
+                .stream()
+                .map(fav -> fav.getProviderProfile().getId())
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public List<Long> getFavoriteProviderIdsForSenior(Long seniorId) {
+        return favoriteRepo.findBySeniorProfile_Id(seniorId)
+                .stream()
+                .map(fav -> fav.getProviderProfile().getId())
+                .collect(java.util.stream.Collectors.toList());
     }
 }
