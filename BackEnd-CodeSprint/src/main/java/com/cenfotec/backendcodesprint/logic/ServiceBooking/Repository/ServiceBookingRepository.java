@@ -50,6 +50,24 @@ public interface ServiceBookingRepository extends JpaRepository<ServiceBooking, 
     List<ServiceBooking> findByCareService_ProviderProfile_IdAndBookingStatusOrderByCreatedDesc(
             Long providerProfileId,
             String bookingStatus);
+
+    @EntityGraph(attributePaths = {
+            "careService",
+            "careService.providerProfile",
+            "careService.providerProfile.user",
+            "clientProfile",
+            "seniorProfile"
+    })
+    List<ServiceBooking> findByClientProfile_IdAndBookingStatus(Long clientProfileId, String bookingStatus);
+
+    @EntityGraph(attributePaths = {
+            "careService",
+            "careService.providerProfile",
+            "careService.providerProfile.user",
+            "clientProfile",
+            "seniorProfile"
+    })
+    List<ServiceBooking> findBySeniorProfile_IdAndBookingStatus(Long seniorProfileId, String bookingStatus);
 }
 
 

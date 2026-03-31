@@ -24,6 +24,9 @@ public class ServiceBookingResponseDto {
 
     private Long careServiceId;
     private String serviceTitle;
+    private Long providerProfileId;
+    private String providerName;
+    private String providerProfileImage;
 
     private BigDecimal agreedPrice;
     private String agreedPriceMode;

@@ -25,6 +25,18 @@ public class ServiceBookingController {
         return ResponseEntity.ok(service.findByProvider(providerProfileId, status));
     }
 
+    @GetMapping("/client/{clientProfileId}/completed")
+    public ResponseEntity<List<ServiceBookingResponseDto>> getCompletedByClient(
+            @PathVariable Long clientProfileId) {
+        return ResponseEntity.ok(service.findCompletedByClient(clientProfileId));
+    }
+
+    @GetMapping("/senior/{seniorProfileId}/completed")
+    public ResponseEntity<List<ServiceBookingResponseDto>> getCompletedBySenior(
+            @PathVariable Long seniorProfileId) {
+        return ResponseEntity.ok(service.findCompletedBySenior(seniorProfileId));
+    }
+
     @PatchMapping("/{bookingId}/respond")
     public ResponseEntity<BookingActionResponseDto> respond(
             @PathVariable Long bookingId,

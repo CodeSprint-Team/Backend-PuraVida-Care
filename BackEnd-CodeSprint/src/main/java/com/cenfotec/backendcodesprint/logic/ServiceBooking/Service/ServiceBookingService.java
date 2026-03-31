@@ -101,4 +101,22 @@ public class ServiceBookingService {
         }
         return serviceBooking;
     }
+
+    @Transactional(readOnly = true)
+    public List<ServiceBookingResponseDto> findCompletedByClient(Long clientProfileId) {
+        return serviceBookingRepository
+                .findByClientProfile_IdAndBookingStatus(clientProfileId, "COMPLETADA")
+                .stream()
+                .map(serviceBookingMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ServiceBookingResponseDto> findCompletedBySenior(Long seniorProfileId) {
+        return serviceBookingRepository
+                .findBySeniorProfile_IdAndBookingStatus(seniorProfileId, "COMPLETADA")
+                .stream()
+                .map(serviceBookingMapper::toResponse)
+                .toList();
+    }
 }

@@ -3,7 +3,8 @@ package com.cenfotec.backendcodesprint.logic.Profile.Service;
 import com.cenfotec.backendcodesprint.logic.Model.*;
 import com.cenfotec.backendcodesprint.logic.Profile.DTO.*;
 import com.cenfotec.backendcodesprint.logic.Profile.Repository.*;
-import com.cenfotec.backendcodesprint.logic.Profile.Repository.ReviewRepository;
+import com.cenfotec.backendcodesprint.logic.Review.Repository.ReviewRepository;
+
 import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,7 +28,7 @@ public class ProfileService {
     private final ProviderProfileRepository    providerRepo;
     private final FavoriteProviderRepository   favoriteRepo;
     private final CareServiceRepository        careServiceRepo;
-    private final ReviewRepository             reviewRepo;
+    private final ReviewRepository reviewRepo;
     private final CareRelationshipRepository   careRelRepo;
     private final UserRepository               userRepository;
     private final ProviderTypeRepository       providerTypeRepo;
@@ -421,6 +422,8 @@ public class ProfileService {
                     .average()
                     .orElse(0.0);
             d.setAverageRating(BigDecimal.valueOf(Math.round(avg * 10.0) / 10.0));
+            p.setAverageRating(d.getAverageRating());
+            providerRepo.save(p);
         } else {
             d.setAverageRating(p.getAverageRating());
         }
@@ -466,7 +469,6 @@ public class ProfileService {
             rv.setDate(r.getCreated() != null ? r.getCreated().format(DATE_FMT) : "");
             return rv;
         }).collect(Collectors.toList()));
-
 
         Map<Integer, Double> distribution = new java.util.LinkedHashMap<>();
         int total = reviews.size();
