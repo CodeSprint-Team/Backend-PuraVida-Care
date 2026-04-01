@@ -37,18 +37,14 @@ public class SecurityConfig {
                         .requestMatchers("/profiles/**").permitAll()
                         .requestMatchers("/bookings/**").permitAll()
                         .requestMatchers("/tracking/**").permitAll()
-
                         .requestMatchers("/simulation/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/ws").permitAll()
-
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").permitAll()
                         .requestMatchers("/users/**").permitAll()
-
                         .requestMatchers("/support-products/**").permitAll()
                         .requestMatchers("/reviews/**").permitAll()
-
                         .requestMatchers(HttpMethod.GET,    "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.POST,   "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.PUT,    "/booking/**").permitAll()
