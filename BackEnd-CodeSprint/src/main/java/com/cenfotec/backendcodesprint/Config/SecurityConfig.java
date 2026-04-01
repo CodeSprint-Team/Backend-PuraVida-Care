@@ -48,6 +48,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/support-products/**").permitAll()
                         .requestMatchers("/reviews/**").permitAll()
+                        .requestMatchers("/services/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET,    "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.POST,   "/booking/**").permitAll()
