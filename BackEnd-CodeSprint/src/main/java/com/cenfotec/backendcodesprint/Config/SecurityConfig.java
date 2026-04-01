@@ -55,6 +55,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH,  "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/booking/**").permitAll()
                         .requestMatchers("/search/**").permitAll()
+                        .requestMatchers("/support-product-catalogs/**").permitAll()
 
 
                         .anyRequest().authenticated()
