@@ -3,14 +3,19 @@ package com.cenfotec.backendcodesprint.logic.Profile.Service;
 import com.cenfotec.backendcodesprint.logic.Model.*;
 import com.cenfotec.backendcodesprint.logic.Profile.DTO.*;
 import com.cenfotec.backendcodesprint.logic.Profile.Repository.*;
+import com.cenfotec.backendcodesprint.logic.Review.Repository.ReviewRepository;
+
 import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -23,10 +28,11 @@ public class ProfileService {
     private final ProviderProfileRepository    providerRepo;
     private final FavoriteProviderRepository   favoriteRepo;
     private final CareServiceRepository        careServiceRepo;
-    private final ReviewRepository             reviewRepo;
+    private final ReviewRepository reviewRepo;
     private final CareRelationshipRepository   careRelRepo;
     private final UserRepository               userRepository;
     private final ProviderTypeRepository       providerTypeRepo;
+    private final PasswordEncoder              passwordEncoder;
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new Locale("es", "CR"));
@@ -124,8 +130,8 @@ public class ProfileService {
         p.setProfileImage(dto.getProfileImage());
         p.setFamilyMember(dto.getFamilyMember());
         p.setFamilyRelation(dto.getFamilyRelation());
-        p.setEmergencyContactName(dto.getEmergencyContactName());
-        p.setEmergencyContactPhone(dto.getEmergencyContactPhone());
+        p.setEmergencyContactName(dto.getEmergencyContactName() != null ? dto.getEmergencyContactName() : "");
+        p.setEmergencyContactPhone(dto.getEmergencyContactPhone() != null ? dto.getEmergencyContactPhone() : "");
         p.setEmergencyRelation(dto.getEmergencyRelation());
         p.setMobilityNotes(dto.getMobilityNotes());
         p.setCarePreference(dto.getCarePreference());
@@ -143,6 +149,10 @@ public class ProfileService {
     public ClientProfileResponseDTO getClientProfile(Long id) {
         return mapToClientResponse(clientRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client profile not found: " + id)));
+    }
+
+    public Optional<ClientProfileResponseDTO> getClientProfileByUserIdOptional(Long userId) {
+        return clientRepo.findByUserId(userId).map(this::mapToClientResponse);
     }
 
     public ClientProfileResponseDTO getClientProfileByUserId(Long userId) {
@@ -180,7 +190,7 @@ public class ProfileService {
 
         ClientProfile p = new ClientProfile();
         p.setUser(user);
-        p.setPhone(dto.getPhone());
+        p.setPhone(dto.getPhone() != null ? dto.getPhone() : "");
         p.setNotes(dto.getNotes());
         p.setProfileImage(dto.getProfileImage());
         p.setRelationToSenior(dto.getRelationToSenior());
@@ -259,9 +269,9 @@ public class ProfileService {
         ProviderProfile p = new ProviderProfile();
         p.setUser(user);
         p.setProviderType(providerType);
-        p.setExperienceDescription(dto.getExperienceDescription());
-        p.setExperienceYears(dto.getExperienceYears());
-        p.setProviderState(dto.getProviderState() != null ? dto.getProviderState() : "activo");
+        p.setExperienceDescription(dto.getExperienceDescription() != null ? dto.getExperienceDescription() : "");
+        p.setExperienceYears(dto.getExperienceYears() != null ? dto.getExperienceYears() : 0);
+        p.setProviderState(dto.getProviderState() != null ? dto.getProviderState() : "pending");
         p.setBio(dto.getBio());
         p.setZone(dto.getZone());
         p.setPhone(dto.getPhone());
@@ -271,6 +281,62 @@ public class ProfileService {
 
         ProviderProfile saved = providerRepo.save(p);
         return mapToProviderResponse(saved, List.of(), List.of());
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ADMIN
+    // ═══════════════════════════════════════════════════════════════
+
+    public AdminProfileResponseDTO getAdminProfileByUserId(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Admin not found: " + userId));
+        return mapToAdminResponse(user);
+    }
+
+    @Transactional
+    public AdminProfileResponseDTO updateAdminProfile(Long userId, AdminProfileUpdateDTO dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Admin not found: " + userId));
+
+        // Datos personales
+        updateUserFields(user, dto.getUserName(), dto.getLastName(), dto.getEmail());
+        if (dto.getPhotoUrl() != null) user.setPhotoUrl(dto.getPhotoUrl());
+
+        // Cambio de contraseña (solo si viene currentPassword)
+        if (dto.getCurrentPassword() != null && !dto.getCurrentPassword().isBlank()) {
+            if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+                throw new RuntimeException("La contraseña actual es incorrecta");
+            }
+            if (dto.getNewPassword() == null || dto.getNewPassword().isBlank()) {
+                throw new RuntimeException("La nueva contraseña no puede estar vacía");
+            }
+            user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        }
+
+        return mapToAdminResponse(userRepository.save(user));
+    }
+
+    // ── Mapper ─────────────────────────────────────────────────────
+
+    private AdminProfileResponseDTO mapToAdminResponse(User user) {
+        AdminProfileResponseDTO d = new AdminProfileResponseDTO();
+        d.setId(user.getId());
+        d.setFullName(user.getUserName() + " " + user.getLastName());
+        d.setEmail(user.getEmail());
+        d.setRole(user.getRole() != null ? user.getRole().getRoleName() : "ADMIN");
+        d.setPhotoUrl(user.getPhotoUrl());
+        d.setCreatedAt(user.getCreated());
+        d.setSystemStats(buildSystemStats());
+        return d;
+    }
+
+    private AdminProfileResponseDTO.SystemStatsDTO buildSystemStats() {
+        AdminProfileResponseDTO.SystemStatsDTO stats = new AdminProfileResponseDTO.SystemStatsDTO();
+        stats.setTotalUsers(userRepository.count());
+        stats.setTotalProviders(providerRepo.count());
+        stats.setActiveServices(careServiceRepo.countByPublicationState("published"));
+        stats.setTotalReviews(reviewRepo.count());
+        return stats;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -350,7 +416,17 @@ public class ProfileService {
         d.setProviderType(p.getProviderType() != null ? p.getProviderType().getTypeName() : null);
         d.setExperienceDescription(p.getExperienceDescription());
         d.setExperienceYears(p.getExperienceYears());
-        d.setAverageRating(p.getAverageRating());
+        if (!reviews.isEmpty()) {
+            double avg = reviews.stream()
+                    .mapToDouble(r -> r.getRanking().doubleValue())
+                    .average()
+                    .orElse(0.0);
+            d.setAverageRating(BigDecimal.valueOf(Math.round(avg * 10.0) / 10.0));
+            p.setAverageRating(d.getAverageRating());
+            providerRepo.save(p);
+        } else {
+            d.setAverageRating(p.getAverageRating());
+        }
         d.setProviderState(p.getProviderState());
         d.setBio(p.getBio());
         d.setZone(p.getZone());
@@ -394,8 +470,24 @@ public class ProfileService {
             return rv;
         }).collect(Collectors.toList()));
 
+        Map<Integer, Double> distribution = new java.util.LinkedHashMap<>();
+        int total = reviews.size();
+        for (int i = 5; i >= 1; i--) {
+            final int star = i;
+            long count = reviews.stream()
+                    .filter(r -> r.getRanking().intValue() == star)
+                    .count();
+            double pct = total > 0 ? (count * 100.0) / total : 0;
+            distribution.put(star, Math.round(pct * 10.0) / 10.0);
+        }
+        d.setRatingDistribution(distribution);
+
         return d;
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SHARED HELPERS
+    // ═══════════════════════════════════════════════════════════════
 
     private void updateUserFields(User u, String userName, String lastName, String email) {
         u.setUserName(userName);
@@ -403,5 +495,50 @@ public class ProfileService {
             u.setLastName(lastName);
         }
         u.setEmail(email);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+// FAVORITOS DE CLIENTE
+// Agregar estos métodos en ProfileService.java
+// ═══════════════════════════════════════════════════════════════
+
+    @Transactional
+    public void addFavoriteProviderForClient(Long clientId, Long providerProfileId) {
+        if (favoriteRepo.existsByClientProfile_IdAndProviderProfile_Id(clientId, providerProfileId)) {
+            throw new RuntimeException("Ya estaba en favoritos");
+        }
+
+        ClientProfile client = clientRepo.findById(clientId)
+                .orElseThrow(() -> new RuntimeException("Client profile not found: " + clientId));
+        ProviderProfile provider = providerRepo.findById(providerProfileId)
+                .orElseThrow(() -> new RuntimeException("Proveedor no encontrado: " + providerProfileId));
+
+        FavoriteProvider fav = new FavoriteProvider();
+        fav.setClientProfile(client);
+        fav.setProviderProfile(provider);
+        favoriteRepo.save(fav);
+    }
+
+    @Transactional
+    public void removeFavoriteProviderForClient(Long clientId, Long providerProfileId) {
+        favoriteRepo.deleteByClientProfile_IdAndProviderProfile_Id(clientId, providerProfileId);
+    }
+
+    public boolean isFavoriteForClient(Long clientId, Long providerProfileId) {
+        return favoriteRepo.existsByClientProfile_IdAndProviderProfile_Id(clientId, providerProfileId);
+    }
+
+    public List<Long> getFavoriteProviderIdsForClient(Long clientId) {
+        return favoriteRepo.findByClientProfile_Id(clientId)
+                .stream()
+                .map(fav -> fav.getProviderProfile().getId())
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public List<Long> getFavoriteProviderIdsForSenior(Long seniorId) {
+        return favoriteRepo.findBySeniorProfile_Id(seniorId)
+                .stream()
+                .map(fav -> fav.getProviderProfile().getId())
+                .collect(java.util.stream.Collectors.toList());
     }
 }

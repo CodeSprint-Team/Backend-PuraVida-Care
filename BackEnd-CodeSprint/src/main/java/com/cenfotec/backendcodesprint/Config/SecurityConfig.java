@@ -34,15 +34,32 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/profiles/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH,  "/profiles/**").permitAll()
                         .requestMatchers("/verifications/**").permitAll()
+                        .requestMatchers("/profiles/**").permitAll()
+                        .requestMatchers("/bookings/**").permitAll()
+                        .requestMatchers("/tracking/**").permitAll()
+
+                        .requestMatchers("/simulation/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/ws").permitAll()
+
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").permitAll()
                         .requestMatchers("/users/**").permitAll()
+
+                        .requestMatchers("/support-products/**").permitAll()
+                        .requestMatchers("/reviews/**").permitAll()
+
                         .requestMatchers(HttpMethod.GET,    "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.POST,   "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.PUT,    "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH,  "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/booking/**").permitAll()
+                        .requestMatchers("/agenda-cliente/**").permitAll()
                         .requestMatchers("/search/**").permitAll()
+                        .requestMatchers("/support-product-catalogs/**").permitAll()
+                        .requestMatchers("/service-categories/**").permitAll()
+
+
                         .anyRequest().authenticated()
                 )
                 .httpBasic(basic -> basic.disable());

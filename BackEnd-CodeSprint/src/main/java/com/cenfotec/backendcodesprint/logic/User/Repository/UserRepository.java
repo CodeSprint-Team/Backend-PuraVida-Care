@@ -16,7 +16,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByGoogleId(String googleId);
     boolean existsByEmail(String email);
 
-    @Query("SELECT u FROM User u WHERE u.role.roleName = 'CLIENT' OR u.role.roleName = 'ADMIN' OR (u.role.roleName IN ('PROVIDER', 'provider') AND EXISTS (SELECT p FROM ProviderProfile p WHERE p.user = u AND p.providerState = 'active'))")
+    @Query("""
+    SELECT u FROM User u JOIN FETCH u.role r
+    WHERE r.roleName IN ('CLIENT', 'ADMIN', 'SENIOR')
+    OR (
+        r.roleName = 'PROVIDER'
+        AND u.userState IN ('active', 'inactive')
+        AND EXISTS (
+            SELECT p FROM ProviderProfile p
+            WHERE p.user = u AND p.providerState = 'active'
+        )
+    )
+""")
     List<User> findUsersForAdmin();
 
     @Modifying

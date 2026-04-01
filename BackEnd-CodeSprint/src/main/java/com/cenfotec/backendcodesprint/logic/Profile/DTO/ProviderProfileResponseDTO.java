@@ -3,6 +3,7 @@ package com.cenfotec.backendcodesprint.logic.Profile.DTO;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class ProviderProfileResponseDTO {
@@ -30,6 +31,7 @@ public class ProviderProfileResponseDTO {
 
     private Integer totalReviews;
     private List<ReviewDTO> reviewsList;
+    private Map<Integer, Double> ratingDistribution;
 
     @Data
     public static class CareServiceDTO {

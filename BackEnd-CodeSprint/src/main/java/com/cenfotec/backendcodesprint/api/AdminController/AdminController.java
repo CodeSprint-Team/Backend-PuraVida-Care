@@ -4,6 +4,7 @@ import com.cenfotec.backendcodesprint.logic.Admin.DTO.ProviderPendingDTO;
 import com.cenfotec.backendcodesprint.logic.Admin.DTO.ReviewProviderDTO;
 import com.cenfotec.backendcodesprint.logic.Admin.DTO.ReviewUserDTO;
 import com.cenfotec.backendcodesprint.logic.Admin.DTO.UserStatusDTO;
+import com.cenfotec.backendcodesprint.logic.Admin.DTO.*;
 import com.cenfotec.backendcodesprint.logic.Admin.Service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +41,23 @@ public class AdminController {
             @PathVariable Long id,
             @RequestBody ReviewUserDTO dto) {
         return ResponseEntity.ok(adminService.reviewUser(id, dto));
+    }
+
+
+    @GetMapping("/services/pending")
+    public ResponseEntity<List<CareServicePendingDTO>> getPendingCareServices() {
+        return ResponseEntity.ok(adminService.getPendingCareServices());
+    }
+
+    @PutMapping("/services/{id}/review")
+    public ResponseEntity<CareServicePendingDTO> reviewCareService(
+            @PathVariable Long id,
+            @RequestBody ReviewCareServiceDTO dto) {
+        return ResponseEntity.ok(adminService.reviewCareService(id, dto));
+    }
+    @GetMapping("/services")
+    public ResponseEntity<List<CareServicePendingDTO>> getAllCareServices() {
+        return ResponseEntity.ok(adminService.getAllCareServices());
     }
 
 }
