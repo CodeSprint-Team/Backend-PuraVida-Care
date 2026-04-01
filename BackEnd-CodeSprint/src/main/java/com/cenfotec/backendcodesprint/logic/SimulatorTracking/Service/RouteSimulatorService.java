@@ -129,7 +129,7 @@ public class RouteSimulatorService {
         log.info("Broadcast WebSocket completado: {} puntos emitidos", routePoints.size());
     }
 
-    private List<double[]> getRouteFromOSRM(List<double[]> waypoints) {
+    public List<double[]> getRouteFromOSRM(List<double[]> waypoints) {
         List<double[]> routePoints = new ArrayList<>();
 
         try {
