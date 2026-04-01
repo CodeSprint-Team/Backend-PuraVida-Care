@@ -5,10 +5,15 @@ import com.cenfotec.backendcodesprint.logic.Cloudinary.CloudinaryService;
 import com.cenfotec.backendcodesprint.logic.Model.SupportProductCatalog;
 import com.cenfotec.backendcodesprint.logic.Model.SupportProductPost;
 import com.cenfotec.backendcodesprint.logic.Model.User;
+import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Request.CreateArticleOfferRequestDTO;
 import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Request.CreateSupportProductPostRequestDTO;
 import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Request.UpdateSupportProductPostRequestDTO;
 import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Response.SupportProductPostResponseDTO;
 import com.cenfotec.backendcodesprint.logic.SupportProduct.Repository.SupportProductPostRepository;
+import com.cenfotec.backendcodesprint.logic.Model.ArticleOffer;
+import com.cenfotec.backendcodesprint.logic.Model.OfferStatus;
+import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Response.ArticleOfferResponseDTO;
+import com.cenfotec.backendcodesprint.logic.SupportProduct.Repository.ArticleOfferRepository;
 import com.cenfotec.backendcodesprint.logic.User.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +32,7 @@ public class SupportProductService {
     private final SupportProductCatalogRepository catalogRepository;
     private final UserRepository userRepository;
     private final CloudinaryService cloudinaryService;
+    private final ArticleOfferRepository articleOfferRepository;
 
     @Transactional
     public void createPost(CreateSupportProductPostRequestDTO dto, MultipartFile image) {
@@ -185,6 +191,50 @@ public class SupportProductService {
             throw new RuntimeException("La ubicación es requerida");
         }
     }
+    @Transactional
+    public ArticleOfferResponseDTO createOffer(CreateArticleOfferRequestDTO dto) {
+
+        if (dto.getSupportProductPostId() == null) {
+            throw new RuntimeException("La publicación es requerida");
+        }
+
+        if (dto.getBuyerUserId() == null) {
+            throw new RuntimeException("El comprador es requerido");
+        }
+
+        if (dto.getAmount() == null || dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("La oferta debe ser mayor a 0");
+        }
+
+        SupportProductPost post = postRepository.findById(dto.getSupportProductPostId())
+                .orElseThrow(() -> new RuntimeException("Publicación no encontrada"));
+
+        User buyer = userRepository.findById(dto.getBuyerUserId())
+                .orElseThrow(() -> new RuntimeException("Usuario comprador no encontrado"));
+
+        if (!Boolean.TRUE.equals(post.getAcceptOffers())) {
+            throw new RuntimeException("Esta publicación no acepta ofertas");
+        }
+
+        if (!"ACTIVE".equalsIgnoreCase(post.getPublicationState())) {
+            throw new RuntimeException("La publicación no está disponible para recibir ofertas");
+        }
+
+        if (post.getUser() != null && post.getUser().getId().equals(buyer.getId())) {
+            throw new RuntimeException("No puedes hacer una oferta sobre tu propia publicación");
+        }
+
+        ArticleOffer offer = new ArticleOffer();
+        offer.setSupportProductPost(post);
+        offer.setBuyerUser(buyer);
+        offer.setAmount(dto.getAmount());
+        offer.setMessage(dto.getMessage());
+        offer.setOfferState(OfferStatus.PENDING);
+
+        ArticleOffer saved = articleOfferRepository.save(offer);
+
+        return mapOfferToResponseDTO(saved);
+    }
 
     private SupportProductPostResponseDTO mapToResponseDTO(SupportProductPost post) {
         SupportProductPostResponseDTO dto = new SupportProductPostResponseDTO();
@@ -219,4 +269,133 @@ public class SupportProductService {
 
         return dto;
     }
+
+    private ArticleOfferResponseDTO mapOfferToResponseDTO(ArticleOffer offer) {
+        ArticleOfferResponseDTO dto = new ArticleOfferResponseDTO();
+
+        SupportProductPost post = offer.getSupportProductPost();
+
+        dto.setId(offer.getId());
+
+        dto.setSupportProductPostId(
+                post != null ? post.getId() : null
+        );
+
+        // 🔥 título
+        dto.setSupportProductTitle(
+                post != null ? post.getTitle() : null
+        );
+
+        // 🔥 imagen
+        dto.setSupportProductImageUrl(
+                post != null ? post.getImageUrl() : null
+        );
+
+        // 🔥 vendedor
+        dto.setSellerUserId(
+                post != null && post.getUser() != null ? post.getUser().getId() : null
+        );
+
+        dto.setSellerName(
+                post != null && post.getUser() != null ? post.getUser().getUserName() : null
+        );
+
+        // comprador
+        dto.setBuyerUserId(
+                offer.getBuyerUser() != null ? offer.getBuyerUser().getId() : null
+        );
+
+        dto.setBuyerUserName(
+                offer.getBuyerUser() != null ? offer.getBuyerUser().getUserName() : null
+        );
+
+        dto.setAmount(offer.getAmount());
+        dto.setMessage(offer.getMessage());
+        dto.setOfferState(offer.getOfferState());
+
+        dto.setCreated(offer.getCreated());
+        dto.setUpdated(offer.getUpdated());
+
+        return dto;
+    }
+    @Transactional
+    public ArticleOfferResponseDTO acceptOffer(Long offerId, Long ownerUserId) {
+        System.out.println("ENTRO AL ENTRO AL SERVICE");
+        System.out.println("offerId = " + offerId);
+        System.out.println("ownerUserId = " + ownerUserId);
+
+        ArticleOffer offer = articleOfferRepository.findByIdAndSupportProductPostUserId(offerId, ownerUserId)
+                .orElseThrow(() -> new RuntimeException("Oferta no encontrada o no pertenece a este usuario"));
+
+        if (offer.getOfferState() != OfferStatus.PENDING) {
+            throw new RuntimeException("Solo se pueden aceptar ofertas pendientes");
+        }
+
+        SupportProductPost post = offer.getSupportProductPost();
+
+        if (!Boolean.TRUE.equals(post.getAcceptOffers())) {
+            throw new RuntimeException("Esta publicación no acepta ofertas");
+        }
+
+        offer.setOfferState(OfferStatus.ACCEPTED);
+        articleOfferRepository.save(offer);
+
+        List<ArticleOffer> pendingOffers =
+                articleOfferRepository.findBySupportProductPostIdAndOfferState(post.getId(), OfferStatus.PENDING);
+
+        for (ArticleOffer otherOffer : pendingOffers) {
+            if (!otherOffer.getId().equals(offer.getId())) {
+                otherOffer.setOfferState(OfferStatus.REJECTED);
+            }
+        }
+
+        articleOfferRepository.saveAll(pendingOffers);
+
+        post.setPublicationState("RESERVED");
+        post.setAcceptOffers(Boolean.FALSE);
+        postRepository.save(post);
+
+        return mapOfferToResponseDTO(offer);
+    }
+    @Transactional
+    public ArticleOfferResponseDTO rejectOffer(Long offerId, Long ownerUserId) {
+
+        ArticleOffer offer = articleOfferRepository.findByIdAndSupportProductPostUserId(offerId, ownerUserId)
+                .orElseThrow(() -> new RuntimeException("Oferta no encontrada o no pertenece a este usuario"));
+
+        if (offer.getOfferState() != OfferStatus.PENDING) {
+            throw new RuntimeException("Solo se pueden rechazar ofertas pendientes");
+        }
+
+        offer.setOfferState(OfferStatus.REJECTED);
+        articleOfferRepository.save(offer);
+
+        return mapOfferToResponseDTO(offer);
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<ArticleOfferResponseDTO> getOffersByPostId(Long postId) {
+        return articleOfferRepository.findBySupportProductPostIdOrderByCreatedDesc(postId)
+                .stream()
+                .map(this::mapOfferToResponseDTO)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ArticleOfferResponseDTO> getOffersReceivedByOwner(Long ownerUserId) {
+        return articleOfferRepository.findBySupportProductPostUserIdOrderByCreatedDesc(ownerUserId)
+                .stream()
+                .map(this::mapOfferToResponseDTO)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ArticleOfferResponseDTO> getOffersMadeByBuyer(Long buyerUserId) {
+        return articleOfferRepository.findByBuyerUserIdOrderByCreatedDesc(buyerUserId)
+                .stream()
+                .map(this::mapOfferToResponseDTO)
+                .toList();
+    }
+
 }
