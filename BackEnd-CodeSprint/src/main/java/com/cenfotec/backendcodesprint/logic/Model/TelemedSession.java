@@ -46,5 +46,14 @@ public class TelemedSession extends BaseEntity {
 
     @Column(name = "ended_at")
     private OffsetDateTime endedAt;
+
+    @Column(name = "ia_consent")
+    private String iaConsent;
+
+    @Column(name = "ia_consent_at")
+    private OffsetDateTime iaConsentAt;
+
+    @Column(name="ia_consent_ip")
+    private String iaConsentIp;
 }
 
