@@ -39,6 +39,9 @@ public class ServiceBooking extends BaseEntity {
     @NotNull
     private LocalDateTime scheduledAt;
 
+    @Column(name = "previous_scheduled_at")
+    private LocalDateTime previousScheduledAt;
+
     @Column(name = "destination_latitude", precision = 10, scale = 7)
     private BigDecimal destinationLatitude;
 
@@ -62,8 +65,13 @@ public class ServiceBooking extends BaseEntity {
     @Column(name = "booking_status", nullable = false, length = 30)
     private String bookingStatus = "PENDIENTE";
 
-
     @Column(name = "rejection_reason", columnDefinition = "Text")
     private String rejectionReason;
+
+    @Column(name = "cancellation_reason", columnDefinition = "TEXT")
+    private String cancellationReason;
+
+    @Column(name = "reschedule_reason", columnDefinition = "TEXT")
+    private String rescheduleReason;
 
 }
