@@ -281,17 +281,14 @@ public class SupportProductService {
                 post != null ? post.getId() : null
         );
 
-        // 🔥 título
         dto.setSupportProductTitle(
                 post != null ? post.getTitle() : null
         );
 
-        // 🔥 imagen
         dto.setSupportProductImageUrl(
                 post != null ? post.getImageUrl() : null
         );
 
-        // 🔥 vendedor
         dto.setSellerUserId(
                 post != null && post.getUser() != null ? post.getUser().getId() : null
         );
