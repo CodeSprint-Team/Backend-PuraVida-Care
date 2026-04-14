@@ -13,10 +13,11 @@ import java.time.LocalDateTime;
 @Setter
 public class CreateServiceBookingRequestDto {
 
-    @NotNull(message = "El clientProfileId es obligatorio.")
+    @NotNull(message = "El userId es obligatorio.")
+    private Long userId;
+
     private Long clientProfileId;
 
-    @NotNull(message = "El seniorProfileId es obligatorio.")
     private Long seniorProfileId;
 
     @NotNull(message = "El careServiceId es obligatorio.")
@@ -32,6 +33,10 @@ public class CreateServiceBookingRequestDto {
     private BigDecimal originLatitude;
 
     private BigDecimal originLongitude;
+
+    private String originText;
+
+    private String destinationText;
 
     @NotNull(message = "El precio acordado es obligatorio.")
     @DecimalMin(value = "0.0", inclusive = false, message = "El precio acordado debe ser mayor a 0.")

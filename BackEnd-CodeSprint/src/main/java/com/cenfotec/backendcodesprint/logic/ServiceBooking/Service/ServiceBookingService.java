@@ -9,6 +9,7 @@ import com.cenfotec.backendcodesprint.logic.Profile.Repository.CareServiceReposi
 import com.cenfotec.backendcodesprint.logic.Profile.Repository.ClientProfileRepository;
 import com.cenfotec.backendcodesprint.logic.Profile.Repository.SeniorProfileRepository;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Request.BookingActionRequestDto;
+import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Request.CancelBookingRequestDto;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Response.BookingActionResponseDto;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Response.ServiceBookingResponseDto;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Request.CreateServiceBookingRequestDto;
@@ -138,15 +139,33 @@ public class ServiceBookingService {
     @Transactional
     public ServiceBookingResponseDto createBooking(CreateServiceBookingRequestDto dto) {
 
-        ClientProfile clientProfile = clientProfileRepository.findById(dto.getClientProfileId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Cliente no encontrado."
-                ));
+        ClientProfile clientProfile = null;
+        SeniorProfile seniorProfile = null;
 
-        SeniorProfile seniorProfile = seniorProfileRepository.findById(dto.getSeniorProfileId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Adulto mayor no encontrado."
-                ));
+        if (dto.getClientProfileId() != null) {
+            clientProfile = clientProfileRepository.findById(dto.getClientProfileId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Cliente no encontrado."
+                    ));
+        } else {
+            clientProfile = clientProfileRepository.findByUserId(dto.getUserId()).orElse(null);
+        }
+
+        if (dto.getSeniorProfileId() != null) {
+            seniorProfile = seniorProfileRepository.findById(dto.getSeniorProfileId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Adulto mayor no encontrado."
+                    ));
+        } else {
+            seniorProfile = seniorProfileRepository.findByUserId(dto.getUserId()).orElse(null);
+        }
+
+        if (clientProfile == null && seniorProfile == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "No existe un perfil de cliente o adulto mayor asociado al userId enviado."
+            );
+        }
 
         CareService careService = careServiceRepository.findById(dto.getCareServiceId())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -162,6 +181,8 @@ public class ServiceBookingService {
         booking.setDestinationLongitude(dto.getDestinationLongitude());
         booking.setOriginLatitude(dto.getOriginLatitude());
         booking.setOriginLongitude(dto.getOriginLongitude());
+        booking.setDestinationText(dto.getDestinationText());
+        booking.setOriginText(dto.getOriginText());
         booking.setAgreedPrice(dto.getAgreedPrice());
         booking.setAgreedPriceMode(dto.getAgreedPriceMode());
         booking.setBookingStatus("PENDIENTE");
@@ -169,6 +190,42 @@ public class ServiceBookingService {
         ServiceBooking savedBooking = serviceBookingRepository.save(booking);
 
         return serviceBookingMapper.toResponse(savedBooking);
+    }
+
+    @Transactional
+    public BookingActionResponseDto cancelBooking(
+            Long bookingId,
+            Long providerProfileId,
+            CancelBookingRequestDto dto
+    ) {
+        ServiceBooking booking = getValidatedBooking(bookingId, providerProfileId);
+
+        System.out.println("providerProfileId recibido: " + providerProfileId);
+        System.out.println("provider asignado al booking: " + booking.getCareService().getProviderProfile().getId());
+        System.out.println("estado actual booking: " + booking.getBookingStatus());
+
+        if ("COMPLETADA".equals(booking.getBookingStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No se puede cancelar una reserva COMPLETADA."
+            );
+        }
+
+        if ("RECHAZADA".equals(booking.getBookingStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No se puede cancelar una reserva RECHAZADA."
+            );
+        }
+
+        booking.setBookingStatus("CANCELADA");
+        serviceBookingRepository.save(booking);
+
+        return new BookingActionResponseDto(
+                booking.getId(),
+                "CANCELADA",
+                "Reserva cancelada correctamente."
+        );
     }
 
 }

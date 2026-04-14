@@ -5,6 +5,7 @@ import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Response.BookingA
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Response.ServiceBookingResponseDto;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Request.CreateServiceBookingRequestDto;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Service.ServiceBookingService;
+import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Request.CancelBookingRequestDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -65,5 +66,13 @@ public class ServiceBookingController {
             @PathVariable Long bookingId,
             @RequestParam Long providerProfileId) {
         return ResponseEntity.ok(service.startService(bookingId, providerProfileId));
+    }
+
+    @PatchMapping("/{bookingId}/cancel")
+    public ResponseEntity<BookingActionResponseDto> cancel(
+            @PathVariable Long bookingId,
+            @RequestParam Long providerProfileId,
+            @Valid @RequestBody CancelBookingRequestDto dto) {
+        return ResponseEntity.ok(service.cancelBooking(bookingId, providerProfileId, dto));
     }
 }
