@@ -59,6 +59,7 @@ public class SecurityConfig {
                         .requestMatchers("/search/**").permitAll()
                         .requestMatchers("/support-product-catalogs/**").permitAll()
                         .requestMatchers("/service-categories/**").permitAll()
+                        .requestMatchers("/filtered-home/**").permitAll()
 
 
                         .anyRequest().authenticated()
