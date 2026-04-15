@@ -1,33 +1,32 @@
 package com.cenfotec.backendcodesprint.logic.Model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "home")
+@Table(name = "hogar")
 public class Home extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "home_id")
+    @Column(name = "hogar_id")
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "senior_profile_id", nullable = false)
-    @NotNull
-    private SeniorProfile seniorProfile;
+    @Column(name = "adulto_id", nullable = false)
+    private Long elderlyId;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_user_id", nullable = false)
-    @NotNull
-    private User createdByUser;
+    @Column(name = "creado_por_id", nullable = false)
+    private Long createdById;
 
-    @Column(name = "home_state", nullable = false, length = 50)
-    @NotBlank
-    private String homeState;
+    @Column(name = "estado_hogar", length = 50, nullable = false)
+    private String status = "active";
+
+    @Column(name = "nombre_hogar", length = 100)
+    private String name;
+
+    @Column(name = "direccion", length = 255)
+    private String address;
 }
