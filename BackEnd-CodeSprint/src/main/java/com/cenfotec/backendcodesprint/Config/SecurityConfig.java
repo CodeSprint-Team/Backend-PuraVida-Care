@@ -61,8 +61,7 @@ public class SecurityConfig {
                         .requestMatchers("/service-categories/**").permitAll()
                         .requestMatchers("/telemedicina-controll/**").permitAll()
                         .requestMatchers("/ai/**").permitAll()
-
-
+                        .requestMatchers("/filtered-home/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(basic -> basic.disable());
