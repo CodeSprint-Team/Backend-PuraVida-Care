@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers("/support-product-catalogs/**").permitAll()
                         .requestMatchers("/service-categories/**").permitAll()
                         .requestMatchers("/telemedicina-controll/**").permitAll()
+                        .requestMatchers("/ai/**").permitAll()
 
 
                         .anyRequest().authenticated()
@@ -69,3 +70,5 @@ public class SecurityConfig {
         return http.build();
     }
 }
+
+
