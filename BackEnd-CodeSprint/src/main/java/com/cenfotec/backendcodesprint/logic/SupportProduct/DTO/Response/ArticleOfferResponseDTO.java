@@ -29,4 +29,6 @@ public class ArticleOfferResponseDTO {
 
     private LocalDateTime created;
     private LocalDateTime updated;
+
+    private String publicationState;
 }
