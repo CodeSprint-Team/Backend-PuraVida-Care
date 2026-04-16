@@ -90,7 +90,7 @@ public class PayPalService {
         );
 
         if (response.getBody() != null) {
-            return response.getBody().toString();
+            return response.getBody().get("id").toString();
         }
 
         throw new RuntimeException("No se pudo crear la orden en PayPal");
