@@ -1,9 +1,13 @@
 package com.cenfotec.backendcodesprint.logic.paypal.service;
+
+import com.cenfotec.backendcodesprint.logic.Model.ServiceBooking;
+import com.cenfotec.backendcodesprint.logic.ServiceBooking.Repository.ServiceBookingRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -21,6 +25,11 @@ public class PayPalService {
     private String baseUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final ServiceBookingRepository serviceBookingRepository;
+
+    public PayPalService(ServiceBookingRepository serviceBookingRepository) {
+        this.serviceBookingRepository = serviceBookingRepository;
+    }
 
     public String getAccessToken() {
         String url = baseUrl + "/v1/oauth2/token";
@@ -52,8 +61,7 @@ public class PayPalService {
         throw new RuntimeException("No se pudo obtener el access token de PayPal");
     }
 
-    public String createOrder(double amount) {
-
+    private Map createOrderResponse(double amount) {
         String accessToken = getAccessToken();
 
         String url = baseUrl + "/v2/checkout/orders";
@@ -90,10 +98,20 @@ public class PayPalService {
         );
 
         if (response.getBody() != null) {
-            return response.getBody().get("id").toString();
+            return response.getBody();
         }
 
         throw new RuntimeException("No se pudo crear la orden en PayPal");
+    }
+
+    public String createOrder(double amount) {
+        Map response = createOrderResponse(amount);
+
+        if (response.get("id") != null) {
+            return response.get("id").toString();
+        }
+
+        throw new RuntimeException("No se pudo obtener el ID de la orden en PayPal");
     }
 
     public String captureOrder(String orderId) {
@@ -122,4 +140,30 @@ public class PayPalService {
         throw new RuntimeException("No se pudo capturar la orden de PayPal");
     }
 
+    public Map createOrderForBooking(Long bookingId) {
+        ServiceBooking booking = serviceBookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking no encontrado"));
+
+        if (booking.getAgreedPrice() == null || booking.getAgreedPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("El monto del servicio no es válido");
+        }
+
+        BigDecimal monto = booking.getAgreedPrice();
+
+        return createOrderResponse(monto.doubleValue());
+    }
+
+    public String captureOrderForBooking(String orderId, Long bookingId) {
+        String response = captureOrder(orderId);
+
+        if ("COMPLETED".equalsIgnoreCase(response)) {
+            ServiceBooking booking = serviceBookingRepository.findById(bookingId)
+                    .orElseThrow(() -> new RuntimeException("Booking no encontrado"));
+
+            booking.setBookingStatus("PAGADO");
+            serviceBookingRepository.save(booking);
+        }
+
+        return response;
+    }
 }
