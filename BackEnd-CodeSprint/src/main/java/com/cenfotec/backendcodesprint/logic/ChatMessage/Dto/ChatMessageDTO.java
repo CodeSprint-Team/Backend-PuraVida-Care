@@ -8,21 +8,23 @@ import lombok.Data;
 
 @Data
 public class ChatMessageDTO {
-    private Long id;
-    private Long conversationId;
-    private Long senderUserId;
-    private String senderName;
-    private String senderAvatarUrl;
-    private String content;
+    private Long          id;
+    private Long          conversationId;
+    private Long          senderUserId;
+    private String        senderName;
+    private String        senderAvatarUrl;
+    private String        content;
     private LocalDateTime sentAt;
 
-    public ChatMessageDTO(ChatMessage msg) {
-        this.id = msg.getId();
+    // Constructor básico — el avatar lo resuelve ChatMessageService
+    public ChatMessageDTO(ChatMessage msg, String resolvedAvatar) {
+        this.id             = msg.getId();
         this.conversationId = msg.getConversation().getId();
-        this.senderUserId = msg.getSenderUser().getId();
-        this.senderName = msg.getSenderUser().getUserName();
-        this.senderAvatarUrl = "https://i.pravatar.cc/150?u=" + msg.getSenderUser().getId();
-        this.content = msg.getContent();
-        this.sentAt = msg.getCreated();
+        this.senderUserId   = msg.getSenderUser().getId();
+        this.senderName     = msg.getSenderUser().getUserName()
+                + " " + msg.getSenderUser().getLastName();
+        this.senderAvatarUrl = resolvedAvatar; // ← foto real
+        this.content        = msg.getContent();
+        this.sentAt         = msg.getCreated();
     }
 }

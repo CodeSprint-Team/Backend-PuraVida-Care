@@ -5,27 +5,40 @@ import lombok.Data;
 
 @Data
 public class ConversationDTO {
-    private Long id;
+    private Long   id;
+    private Long   clientUserId;
+    private Long   providerUserId;
     private String providerName;
     private String providerAvatar;
     private String clientName;
     private String clientAvatar;
     private String lastMessage;
     private String lastMessageTime;
+    private int    unreadCount; // ← nuevo
 
-    public ConversationDTO(Conversation conv, String lastMessage, String lastMessageTime) {
+    public ConversationDTO(Conversation conv,
+                           String lastMessage,
+                           String lastMessageTime,
+                           String providerAvatar,
+                           String clientAvatar,
+                           int unreadCount) { // ← nuevo
         this.id = conv.getId();
 
         if (conv.getProviderUser() != null) {
-            this.providerName   = conv.getProviderUser().getUserName();
-            this.providerAvatar = "https://i.pravatar.cc/150?u=" + conv.getProviderUser().getId();
+            this.providerUserId = conv.getProviderUser().getId();
+            this.providerName   = conv.getProviderUser().getUserName()
+                    + " " + conv.getProviderUser().getLastName();
+            this.providerAvatar = providerAvatar;
         }
         if (conv.getClientUser() != null) {
-            this.clientName   = conv.getClientUser().getUserName();
-            this.clientAvatar = "https://i.pravatar.cc/150?u=" + conv.getClientUser().getId();
+            this.clientUserId = conv.getClientUser().getId();
+            this.clientName   = conv.getClientUser().getUserName()
+                    + " " + conv.getClientUser().getLastName();
+            this.clientAvatar = clientAvatar;
         }
 
         this.lastMessage     = lastMessage;
         this.lastMessageTime = lastMessageTime;
+        this.unreadCount     = unreadCount;
     }
 }

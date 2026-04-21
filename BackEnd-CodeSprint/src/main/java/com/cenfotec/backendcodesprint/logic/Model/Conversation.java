@@ -16,8 +16,8 @@ public class Conversation extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "service_booking_id")
-    private ServiceBooking serviceBooking; // ahora nullable
+    @JoinColumn(name = "service_booking_id", nullable = true)
+    private ServiceBooking serviceBooking;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_user_id")
