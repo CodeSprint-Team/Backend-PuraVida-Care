@@ -1,5 +1,6 @@
 package com.cenfotec.backendcodesprint.logic.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -23,11 +24,13 @@ public class CareService extends BaseEntity {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_profile_id", nullable = false)
     @NotNull
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private ProviderProfile providerProfile;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "service_category_id", nullable = false)
     @NotNull
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private ServiceCategory serviceCategory;
 
     @Column(name = "title", nullable = false, length = 150)
