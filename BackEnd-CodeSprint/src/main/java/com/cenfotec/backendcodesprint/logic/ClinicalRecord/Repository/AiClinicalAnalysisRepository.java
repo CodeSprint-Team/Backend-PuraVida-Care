@@ -16,5 +16,5 @@ public interface AiClinicalAnalysisRepository extends JpaRepository<AiClinicalAn
 
     Optional<AiClinicalAnalysis> findByTelemedSession(TelemedSession telemedSession);
 
-    Optional<AiClinicalAnalysis> findByTelemedSessionId(Long telemedSessionId);
+    Optional<AiClinicalAnalysis> findFirstByTelemedSessionIdOrderByCreatedDesc(Long telemedSessionId);
 }

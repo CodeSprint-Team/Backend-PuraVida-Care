@@ -27,9 +27,9 @@ public class FilteredHomeMapper {
         dto.setClientName(clientName);
         dto.setServiceTitle(serviceTitle);
         dto.setCategory(category);
-        dto.setRoomName(marker.getRoomName());
+        dto.setRoomName(marker.getRoom());
         dto.setTitle(marker.getTitle());
-        dto.setDescription(marker.getMarkerDescription());
+        dto.setDescription(marker.getDescription());
 
         return dto;
     }

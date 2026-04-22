@@ -40,7 +40,6 @@ public class TelemedAiService {
     private final AiClinicalAnalysisRepository aiClinicalAnalysisRepository;
 
 
-
     // ============================================================
     // CONSENTIMIENTO
     // ============================================================
@@ -290,15 +289,15 @@ public class TelemedAiService {
             item.put("endedAt", session.getEndedAt());
             item.put("aiStatus", session.getAiStatus());
 
-            // Buscar el análisis IA de esta sesión
             var analysis = aiClinicalAnalysisRepository
-                    .findByTelemedSessionId(session.getId());
+                    .findFirstByTelemedSessionIdOrderByCreatedDesc(session.getId());
 
             if (analysis.isPresent()) {
                 try {
                     Map<String, Object> payload = objectMapper.readValue(
                             analysis.get().getPayloadWithoutPii(),
-                            new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {}
+                            new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {
+                            }
                     );
                     item.put("record", payload);
                 } catch (Exception e) {
@@ -314,4 +313,5 @@ public class TelemedAiService {
 
         return result;
     }
+
 }
