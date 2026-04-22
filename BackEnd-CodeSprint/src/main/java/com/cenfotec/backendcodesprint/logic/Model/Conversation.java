@@ -1,13 +1,11 @@
 package com.cenfotec.backendcodesprint.logic.Model;
 
-
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Getter @Setter
+@Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "conversation")
 public class Conversation extends BaseEntity {
@@ -17,9 +15,15 @@ public class Conversation extends BaseEntity {
     @Column(name = "conversation_id")
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "service_booking_id", nullable = false)
-    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_booking_id", nullable = true)
     private ServiceBooking serviceBooking;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_user_id")
+    private User clientUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "provider_user_id")
+    private User providerUser;
 }
