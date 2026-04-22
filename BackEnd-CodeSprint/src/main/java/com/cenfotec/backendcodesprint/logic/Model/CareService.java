@@ -51,9 +51,15 @@ public class CareService extends BaseEntity {
     private String priceMode;
 
     @Column(name = "publication_state", nullable = false, length = 30)
-    private String publicationState = "draft";
+    private String publicationState = "PENDIENTE";
 
     @Column(name = "rejection_reason", columnDefinition = "Text")
     private String rejectionReason;
+
+    @Column(name = "zone", length = 100)
+    private String zone;
+
+    @Column(name = "modality", length = 50)
+    private String modality;
 }
 

@@ -3,17 +3,17 @@ package com.cenfotec.backendcodesprint.api.UserController;
 import com.cenfotec.backendcodesprint.logic.Model.User;
 import com.cenfotec.backendcodesprint.logic.User.Service.UserService;
 import com.cenfotec.backendcodesprint.Security.JwtTokenProvider;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-import java.util.Map;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
 @RestController
 @RequestMapping("/auth")
@@ -36,64 +36,68 @@ public class AuthController {
         return ResponseEntity.ok("Backend funcionando correctamente");
     }
 
-    @GetMapping("/google/url")
-    public ResponseEntity<Map<String, String>> getGoogleAuthUrl() {
-        Map<String, String> response = new HashMap<>();
-        response.put("url", "http://localhost:8081/api/v1/auth/login/oauth2/code/google");
-        return ResponseEntity.ok(response);
-    }
-
     @PostMapping("/google/callback")
-    public ResponseEntity<?> googleCallback(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> googleCallback(@RequestBody Map<String, Object> request) {
         try {
-            System.out.println("Google Client ID: " + googleClientId);
-            System.out.println("Token recibido: " + request.get("token"));
-            // 1. El frontend envía el token de Google en el body
-            String googleToken = request.get("token");
+            String accessToken = (String) request.get("token");
+            Long roleId = request.get("roleId") != null
+                    ? Long.valueOf(request.get("roleId").toString())
+                    : null;
 
-            // 2. Verificar el token con Google
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                    new NetHttpTransport(),
-                    new GsonFactory())
-                    .setAudience(Collections.singletonList(googleClientId))
-                    .build();
+            if (accessToken == null || accessToken.isEmpty()) {
+                return ResponseEntity.status(400).body(Map.of("error", "Token no proporcionado"));
+            }
 
-            GoogleIdToken idToken = verifier.verify(googleToken);
+            // Verificar el access token con la API de Google
+            URL url = new URL("https://www.googleapis.com/oauth2/v3/userinfo");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Authorization", "Bearer " + accessToken);
 
-            if (idToken == null) {
+            int responseCode = conn.getResponseCode();
+            System.out.println("Google userinfo response code: " + responseCode);
+
+            if (responseCode != 200) {
                 return ResponseEntity.status(401).body(Map.of("error", "Token de Google inválido"));
             }
 
-            // 3. Obtener información del usuario de Google
-            GoogleIdToken.Payload payload = idToken.getPayload();
-            String email = payload.getEmail();
-            String name = (String) payload.get("name");
-            String picture = (String) payload.get("picture");
-            String givenName = (String) payload.get("given_name");
-            String subject = payload.getSubject();
+            Scanner scanner = new Scanner(conn.getInputStream());
+            String jsonResponse = scanner.useDelimiter("\\A").next();
+            scanner.close();
 
-            // 4. Buscar o crear usuario en tu base de datos
-            User user = userService.createOrUpdateGoogleUser(
-                    email,
-                    name,
-                    givenName != null ? givenName : name.split(" ")[0],
-                    subject,
-                    picture
-            );
+            System.out.println("Google userinfo response: " + jsonResponse);
 
-            // 5. Generar tu propio JWT
+            JsonObject userInfo = JsonParser.parseString(jsonResponse).getAsJsonObject();
+
+            String email   = userInfo.get("email").getAsString();
+            String name    = userInfo.has("name")       ? userInfo.get("name").getAsString()       : email;
+            String given   = userInfo.has("given_name") ? userInfo.get("given_name").getAsString() : name;
+            String picture = userInfo.has("picture")    ? userInfo.get("picture").getAsString()    : "";
+            String subject = userInfo.has("sub")        ? userInfo.get("sub").getAsString()        : email;
+
+            Object[] result = userService.createOrUpdateGoogleUser(email, name, given, subject, picture, roleId);
+            User user      = (User) result[0];
+            boolean isNew  = (boolean) result[1];
+
+            System.out.println("User ID: " + user.getId() + " | isNewUser: " + isNew);
+
+            if ("inactive".equalsIgnoreCase(user.getUserState())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Cuenta desactivada. Contactá al soporte."));
+            }
+
             String jwtToken = jwtTokenProvider.generateToken(user);
 
-            // 6. Responder con el token y datos del usuario
             return ResponseEntity.ok(Map.of(
-                    "token", jwtToken,
-                    "email", user.getEmail(),
-                    "name", user.getUserName() + " " + user.getLastName(),
-                    "userId", user.getId(),
-                    "role", user.getRole().getRoleName()
+                    "token",     jwtToken,
+                    "email",     user.getEmail(),
+                    "name",      user.getUserName() + " " + user.getLastName(),
+                    "userId",    user.getId(),
+                    "role",      user.getRole().getRoleName(),
+                    "isNewUser", isNew
             ));
 
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", "Error en autenticación: " + e.getMessage()));
         }
     }
@@ -107,11 +111,11 @@ public class AuthController {
 
             if (jwtTokenProvider.validateToken(token)) {
                 String email = jwtTokenProvider.getEmailFromToken(token);
-                Long userId = jwtTokenProvider.getUserIdFromToken(token);
+                Long userId  = jwtTokenProvider.getUserIdFromToken(token);
 
                 response.put("valid", true);
                 response.put("user", Map.of(
-                        "email", email,
+                        "email",  email,
                         "userId", userId
                 ));
                 return ResponseEntity.ok(response);
@@ -122,13 +126,30 @@ public class AuthController {
         return ResponseEntity.status(401).body(response);
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
+        try {
+            String email    = request.get("email");
+            String password = request.get("password");
 
+            User user = userService.loginWithEmailAndPassword(email, password);
 
-    @GetMapping("/debug/env")
-    public ResponseEntity<Map<String, String>> debugEnv() {
-        Map<String, String> response = new HashMap<>();
-        response.put("GOOGLE_CLIENT_ID", googleClientId);
-        response.put("GOOGLE_CLIENT_ID_ENV", System.getenv("GOOGLE_CLIENT_ID"));
-        return ResponseEntity.ok(response);
+            if ("inactive".equalsIgnoreCase(user.getUserState())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Cuenta desactivada. Contactá al soporte."));
+            }
+
+            String jwtToken = jwtTokenProvider.generateToken(user);
+
+            return ResponseEntity.ok(Map.of(
+                    "token",  jwtToken,
+                    "email",  user.getEmail(),
+                    "name",   user.getUserName() + " " + user.getLastName(),
+                    "userId", user.getId(),
+                    "role",   user.getRole().getRoleName()
+            ));
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
+        }
     }
 }

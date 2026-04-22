@@ -51,7 +51,7 @@ public class User extends BaseEntity {
     @Column(name = "google_id", length = 100, unique = true)
     private String googleId;
 
-    @Column(name = "photo_url")
+    @Column(name = "photo_url", columnDefinition = "Text")
     private String photoUrl;
 
     @Column(name = "provider", length = 20)
