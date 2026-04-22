@@ -1,6 +1,7 @@
 package com.cenfotec.backendcodesprint.logic.Telemedicina.Service;
 
 import com.cenfotec.backendcodesprint.logic.ClinicalRecord.Enums.EntryType;
+import com.cenfotec.backendcodesprint.logic.ClinicalRecord.Repository.AiClinicalAnalysisRepository;
 import com.cenfotec.backendcodesprint.logic.ClinicalRecord.Service.ClinicalRecordService;
 import com.cenfotec.backendcodesprint.logic.Model.ClinicalRecord;
 import com.cenfotec.backendcodesprint.logic.Model.TelemedSession;
@@ -17,6 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,6 +37,7 @@ public class TelemedAiService {
     private final ClinicalRecordService clinicalRecordService;
     private final ObjectMapper objectMapper;
     private final SimpMessagingTemplate messaging;
+    private final AiClinicalAnalysisRepository aiClinicalAnalysisRepository;
 
 
 
@@ -131,18 +136,29 @@ public class TelemedAiService {
     // FINALIZAR SESIÓN Y GENERAR EXPEDIENTE
     // ============================================================
 
+    @Transactional
     public EndSessionResponse endSession(String sessionId, String providerName, int durationMinutes) {
 
+        log.info("[endSession] Iniciando cierre de sesión {}", sessionId);
+
+        // ─── 1. Buscar la sesión ───
         TelemedSession session = repository.findById(Long.parseLong(sessionId))
                 .orElseThrow(() -> new RuntimeException("No se encontró la sesión " + sessionId));
 
         SessionAiState state = activeSessions.get(sessionId);
         String transcriptText = state != null ? state.getTranscript() : "";
 
+        log.info("[endSession] Transcripción obtenida, length = {}, aiConsent = {}",
+                transcriptText.length(), session.getAiConsent());
+
+        // ─── 2. Buscar o crear expediente del senior ───
         ClinicalRecord clinicalRecord = clinicalRecordService.findOrCreateRecord(
                 session.getSeniorProfile()
         );
 
+        log.info("[endSession] ClinicalRecord obtenido, id = {}", clinicalRecord.getId());
+
+        // ─── 3. Guardar transcripción (SIEMPRE, aunque la IA falle) ───
         if (!transcriptText.isBlank()) {
             clinicalRecordService.addEntry(
                     clinicalRecord,
@@ -150,38 +166,55 @@ public class TelemedAiService {
                     transcriptText,
                     session.getProviderProfile().getUser()
             );
+            log.info("[endSession] Entry TRANSCRIPTION guardada");
         }
+
+        // ─── 4. Intentar análisis IA ───
         AiStatus finalStatus;
         Map<String, Object> aiRecord = null;
 
         if (!session.getAiConsent()) {
             finalStatus = AiStatus.NOT_CONSENTED;
+            log.info("[endSession] Status final: NOT_CONSENTED (sin consentimiento)");
         } else if (transcriptText.isBlank()) {
             finalStatus = AiStatus.PARTIAL;
+            log.info("[endSession] Status final: PARTIAL (sin transcripción)");
         } else {
             try {
+                log.info("[endSession] Llamando a IA para generar expediente...");
                 aiRecord = mcpClient.generateMedicalRecord(
                         transcriptText, sessionId, providerName, durationMinutes
                 );
-                clinicalRecordService.saveAiAnalysis(
+                log.info("[endSession] ✅ IA respondió OK, aiRecord keys = {}",
+                        aiRecord != null ? aiRecord.keySet() : "null");
+
+                String payloadJson = objectMapper.writeValueAsString(aiRecord);
+                log.info("[endSession] JSON serializado, length = {}", payloadJson.length());
+
+                var saved = clinicalRecordService.saveAiAnalysis(
                         clinicalRecord,
                         session,
                         session.getProviderProfile(),
                         transcriptText,
                         "completed",
-                        objectMapper.writeValueAsString(aiRecord)
+                        payloadJson
                 );
+                log.info("[endSession] ✅ saveAiAnalysis OK, id generado = {}",
+                        saved != null ? saved.getId() : "null");
+
                 finalStatus = AiStatus.COMPLETED;
             } catch (Exception e) {
-                log.warn("IA no disponible para la sesión {}: {}", sessionId, e.getMessage());
+                log.error("[endSession] ❌ Error en el bloque IA: {}", e.getMessage(), e);
                 finalStatus = AiStatus.UNAVAILABLE;
             }
         }
 
+        // ─── 5. Cerrar sesión ───
         session.setSessionState("completed");
         session.setEndedAt(OffsetDateTime.now());
         session.setAiStatus(finalStatus);
         repository.save(session);
+        log.info("[endSession] Sesión {} cerrada con status {}", sessionId, finalStatus);
 
         activeSessions.remove(sessionId);
 
@@ -241,5 +274,44 @@ public class TelemedAiService {
     public AiHealthResponse checkAiHealth() {
         boolean healthy = mcpClient.isHealthy();
         return mapper.toAiHealthResponse(healthy);
+    }
+
+    public List<Map<String, Object>> getSessionHistory(Long seniorProfileId) {
+        List<TelemedSession> sessions = repository.findBySeniorProfileIdOrderByEndedAtDesc(seniorProfileId);
+
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (TelemedSession session : sessions) {
+            if (!"completed".equals(session.getSessionState())) continue;
+
+            Map<String, Object> item = new HashMap<>();
+            item.put("sessionId", session.getId());
+            item.put("startedAt", session.getStartedAt());
+            item.put("endedAt", session.getEndedAt());
+            item.put("aiStatus", session.getAiStatus());
+
+            // Buscar el análisis IA de esta sesión
+            var analysis = aiClinicalAnalysisRepository
+                    .findByTelemedSessionId(session.getId());
+
+            if (analysis.isPresent()) {
+                try {
+                    Map<String, Object> payload = objectMapper.readValue(
+                            analysis.get().getPayloadWithoutPii(),
+                            new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {}
+                    );
+                    item.put("record", payload);
+                } catch (Exception e) {
+                    log.warn("Error parseando payload para sesión {}", session.getId());
+                    item.put("record", null);
+                }
+            } else {
+                item.put("record", null);
+            }
+
+            result.add(item);
+        }
+
+        return result;
     }
 }

@@ -403,6 +403,13 @@ public class ProfileService {
         d.setEmergencyContactRelation(p.getEmergencyContactRelation());
         d.setEmergencyContactPhone(p.getEmergencyContactPhone());
         d.setImportantNotes(p.getImportantNotes());
+
+        // ⬇ Buscar el senior asociado a este cliente
+        List<CareRelationship> relations = careRelRepo.findByClientProfile_Id(p.getId());
+        if (!relations.isEmpty()) {
+            d.setSeniorProfileId(relations.get(0).getSeniorProfile().getId());
+        }
+
         return d;
     }
 
