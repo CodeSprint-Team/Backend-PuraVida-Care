@@ -10,6 +10,9 @@ import com.cenfotec.backendcodesprint.logic.Telemedicina.Service.TelemedAiServic
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/telemedicina-controll")
 public class TelemedAiController {
@@ -37,10 +40,13 @@ public class TelemedAiController {
     public ResponseEntity<EndSessionResponse> endSession(
             @PathVariable String sessionId,
             @RequestBody(required = false) EndSessionRequest request
+
     ) {
         String providerName = request != null ? request.getProviderName() : "";
         int duration = request != null ? request.getDurationMinutes() : 0;
+        System.out.println("END SESSION CONTROLLER -> inicio sessionId = " + sessionId);
         return ResponseEntity.ok(service.endSession(sessionId, providerName, duration));
+
     }
 
     @GetMapping("/telemed-sessions/{sessionId}/transcript")
@@ -51,5 +57,14 @@ public class TelemedAiController {
     @GetMapping("/telemed-ai/health")
     public ResponseEntity<AiHealthResponse> aiHealthCheck() {
         return ResponseEntity.ok(service.checkAiHealth());
+    }
+
+    // GET /telemedicina-controll/telemed-sessions/senior/{seniorProfileId}/history
+    @GetMapping("/telemed-sessions/senior/{seniorProfileId}/history")
+    public ResponseEntity<List<Map<String, Object>>> getTelemedHistory(
+            @PathVariable Long seniorProfileId) {
+
+        List<Map<String, Object>> history = service.getSessionHistory(seniorProfileId);
+        return ResponseEntity.ok(history);
     }
 }

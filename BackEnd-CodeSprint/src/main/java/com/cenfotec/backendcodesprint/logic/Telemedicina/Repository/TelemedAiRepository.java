@@ -23,5 +23,7 @@ public interface TelemedAiRepository extends JpaRepository<TelemedSession, Long>
     );
 
     Optional<TelemedSession> findById(Long id);
+
+    List<TelemedSession> findBySeniorProfileIdOrderByEndedAtDesc(Long seniorProfileId);
 }
 
