@@ -65,11 +65,13 @@ public class SecurityConfig {
                         .requestMatchers("/search/**").permitAll()
                         .requestMatchers("/support-product-catalogs/**").permitAll()
                         .requestMatchers("/service-categories/**").permitAll()
+                        .requestMatchers("/paypal/**").permitAll()
                         .requestMatchers("/telemedicina-controll/**").permitAll()
                         .requestMatchers("/ai/**").permitAll()
                         .requestMatchers("/filtered-home/**").permitAll()
                         .requestMatchers("/chat/**").permitAll()
                         .requestMatchers("/conversations/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .httpBasic(basic -> basic.disable());

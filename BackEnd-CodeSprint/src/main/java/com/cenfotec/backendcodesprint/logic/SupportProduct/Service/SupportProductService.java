@@ -281,17 +281,14 @@ public class SupportProductService {
                 post != null ? post.getId() : null
         );
 
-        // 🔥 título
         dto.setSupportProductTitle(
                 post != null ? post.getTitle() : null
         );
 
-        // 🔥 imagen
         dto.setSupportProductImageUrl(
                 post != null ? post.getImageUrl() : null
         );
 
-        // 🔥 vendedor
         dto.setSellerUserId(
                 post != null && post.getUser() != null ? post.getUser().getId() : null
         );
@@ -300,7 +297,6 @@ public class SupportProductService {
                 post != null && post.getUser() != null ? post.getUser().getUserName() : null
         );
 
-        // comprador
         dto.setBuyerUserId(
                 offer.getBuyerUser() != null ? offer.getBuyerUser().getId() : null
         );
@@ -315,6 +311,10 @@ public class SupportProductService {
 
         dto.setCreated(offer.getCreated());
         dto.setUpdated(offer.getUpdated());
+
+        dto.setPublicationState(
+                post != null ? post.getPublicationState() : null
+        );
 
         return dto;
     }
@@ -351,7 +351,7 @@ public class SupportProductService {
 
         articleOfferRepository.saveAll(pendingOffers);
 
-        post.setPublicationState("RESERVED");
+        post.setPublicationState("PENDING");
         post.setAcceptOffers(Boolean.FALSE);
         postRepository.save(post);
 
@@ -396,6 +396,17 @@ public class SupportProductService {
                 .stream()
                 .map(this::mapOfferToResponseDTO)
                 .toList();
+    }
+
+    @Transactional
+    public void markAsSold(Long productId) {
+        SupportProductPost post = postRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        post.setPublicationState("SOLD");
+        post.setAcceptOffers(false);
+
+        postRepository.save(post);
     }
 
 }
