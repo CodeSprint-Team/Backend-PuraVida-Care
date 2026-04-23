@@ -142,6 +142,7 @@ public class ServiceBookingService {
         ClientProfile clientProfile = null;
         SeniorProfile seniorProfile = null;
 
+        // --- Resolver perfil de cliente ---
         if (dto.getClientProfileId() != null) {
             clientProfile = clientProfileRepository.findById(dto.getClientProfileId())
                     .orElseThrow(() -> new ResponseStatusException(
@@ -151,6 +152,7 @@ public class ServiceBookingService {
             clientProfile = clientProfileRepository.findByUserId(dto.getUserId()).orElse(null);
         }
 
+        // --- Resolver perfil de adulto mayor ---
         if (dto.getSeniorProfileId() != null) {
             seniorProfile = seniorProfileRepository.findById(dto.getSeniorProfileId())
                     .orElseThrow(() -> new ResponseStatusException(
@@ -160,6 +162,7 @@ public class ServiceBookingService {
             seniorProfile = seniorProfileRepository.findByUserId(dto.getUserId()).orElse(null);
         }
 
+        // --- Validación: al menos uno debe existir ---
         if (clientProfile == null && seniorProfile == null) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
@@ -167,14 +170,15 @@ public class ServiceBookingService {
             );
         }
 
+        // --- A partir de aquí no cambia nada, se asigna lo que haya ---
         CareService careService = careServiceRepository.findById(dto.getCareServiceId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Servicio no encontrado."
                 ));
 
         ServiceBooking booking = new ServiceBooking();
-        booking.setClientProfile(clientProfile);
-        booking.setSeniorProfile(seniorProfile);
+        booking.setClientProfile(clientProfile);       // puede ser null
+        booking.setSeniorProfile(seniorProfile);        // puede ser null
         booking.setCareService(careService);
         booking.setScheduledAt(dto.getScheduledAt());
         booking.setDestinationLatitude(dto.getDestinationLatitude());
