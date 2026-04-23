@@ -1,12 +1,10 @@
 package com.cenfotec.backendcodesprint.logic.paypal.service;
-
 import com.cenfotec.backendcodesprint.logic.Model.ServiceBooking;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Repository.ServiceBookingRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -25,6 +23,7 @@ public class PayPalService {
     private String baseUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
+
     private final ServiceBookingRepository serviceBookingRepository;
 
     public PayPalService(ServiceBookingRepository serviceBookingRepository) {
@@ -62,6 +61,10 @@ public class PayPalService {
     }
 
     private Map createOrderResponse(double amount) {
+      
+    public String createOrder(double amount) {
+
+
         String accessToken = getAccessToken();
 
         String url = baseUrl + "/v2/checkout/orders";
@@ -98,11 +101,16 @@ public class PayPalService {
         );
 
         if (response.getBody() != null) {
+
             return response.getBody();
+
+            return response.getBody().get("id").toString();
+
         }
 
         throw new RuntimeException("No se pudo crear la orden en PayPal");
     }
+
 
     public String createOrder(double amount) {
         Map response = createOrderResponse(amount);
@@ -140,6 +148,7 @@ public class PayPalService {
         throw new RuntimeException("No se pudo capturar la orden de PayPal");
     }
 
+
     public Map createOrderForBooking(Long bookingId) {
         ServiceBooking booking = serviceBookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking no encontrado"));
@@ -166,4 +175,5 @@ public class PayPalService {
 
         return response;
     }
+
 }
