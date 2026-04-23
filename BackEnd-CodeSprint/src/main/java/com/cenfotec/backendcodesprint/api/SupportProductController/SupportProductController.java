@@ -4,6 +4,9 @@ import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Request.CreateSup
 import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Request.UpdateSupportProductPostRequestDTO;
 import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Response.SupportProductPostResponseDTO;
 import com.cenfotec.backendcodesprint.logic.SupportProduct.Service.SupportProductService;
+import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Request.OfferActionRequestDTO;
+import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Request.CreateArticleOfferRequestDTO;
+import com.cenfotec.backendcodesprint.logic.SupportProduct.DTO.Response.ArticleOfferResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -55,4 +58,47 @@ public class SupportProductController {
         supportProductService.deletePost(id);
         return ResponseEntity.ok("Publicación eliminada correctamente");
     }
+
+    @PatchMapping("/offers/{offerId}/accept")
+    public ResponseEntity<ArticleOfferResponseDTO> acceptOffer(
+            @PathVariable Long offerId,
+            @RequestBody OfferActionRequestDTO dto
+    ) {
+        System.out.println("ENTRO AL CONTROLLER ACCEPT");
+        System.out.println("offerId = " + offerId);
+        System.out.println("ownerUserId = " + dto.getOwnerUserId());
+
+        return ResponseEntity.ok(supportProductService.acceptOffer(offerId, dto.getOwnerUserId()));
+    }
+
+    @PatchMapping("/offers/{offerId}/reject")
+    public ResponseEntity<ArticleOfferResponseDTO> rejectOffer(
+            @PathVariable Long offerId,
+            @RequestBody OfferActionRequestDTO dto
+    ) {
+        return ResponseEntity.ok(supportProductService.rejectOffer(offerId, dto.getOwnerUserId()));
+    }
+    @PostMapping("/offers")
+    public ResponseEntity<ArticleOfferResponseDTO> createOffer(
+            @RequestBody CreateArticleOfferRequestDTO dto
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(supportProductService.createOffer(dto));
+    }
+
+    @GetMapping("/offers/post/{postId}")
+    public ResponseEntity<List<ArticleOfferResponseDTO>> getOffersByPostId(@PathVariable Long postId) {
+        return ResponseEntity.ok(supportProductService.getOffersByPostId(postId));
+    }
+
+    @GetMapping("/offers/received/{ownerUserId}")
+    public ResponseEntity<List<ArticleOfferResponseDTO>> getOffersReceived(@PathVariable Long ownerUserId) {
+        return ResponseEntity.ok(supportProductService.getOffersReceivedByOwner(ownerUserId));
+    }
+
+    @GetMapping("/offers/made/{buyerUserId}")
+    public ResponseEntity<List<ArticleOfferResponseDTO>> getOffersMade(@PathVariable Long buyerUserId) {
+        return ResponseEntity.ok(supportProductService.getOffersMadeByBuyer(buyerUserId));
+    }
+
 }

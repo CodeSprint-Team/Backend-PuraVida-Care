@@ -48,6 +48,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/support-products/**").permitAll()
                         .requestMatchers("/reviews/**").permitAll()
+                        .requestMatchers("/services/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET,    "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.POST,   "/booking/**").permitAll()
@@ -58,6 +59,7 @@ public class SecurityConfig {
                         .requestMatchers("/search/**").permitAll()
                         .requestMatchers("/support-product-catalogs/**").permitAll()
                         .requestMatchers("/service-categories/**").permitAll()
+                        .requestMatchers("/paypal/**").permitAll()
 
 
                         .anyRequest().authenticated()

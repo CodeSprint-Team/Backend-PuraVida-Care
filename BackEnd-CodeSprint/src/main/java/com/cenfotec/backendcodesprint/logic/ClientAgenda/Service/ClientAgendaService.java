@@ -5,6 +5,7 @@ import com.cenfotec.backendcodesprint.logic.ClientAgenda.DTO.RescheduleRequestDT
 import com.cenfotec.backendcodesprint.logic.ClientAgenda.Mapper.ClientAgendaMapper;
 import com.cenfotec.backendcodesprint.logic.ClientAgenda.Repository.ClientAgendaRepository;
 import com.cenfotec.backendcodesprint.logic.Model.ServiceBooking;
+import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Request.CancelBookingRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +40,7 @@ public class ClientAgendaService {
 
     // Cancelar
     @Transactional
-    public AgendaBookingResponseDTO cancelBooking(Long bookingId, Long clientProfileId) {
+    public AgendaBookingResponseDTO cancelBooking(Long bookingId, Long clientProfileId, CancelBookingRequestDto dto) {
         ServiceBooking booking = clientAgendaRepository
                 .findByIdAndClientProfile_Id(bookingId, clientProfileId)
                 .orElseThrow(() -> new RuntimeException(
@@ -53,6 +54,7 @@ public class ClientAgendaService {
         }
 
         booking.setBookingStatus("CANCELADO");
+        booking.setCancellationReason(dto.getReason());
         return clientAgendaMapper.toDTO(clientAgendaRepository.save(booking));
     }
 
@@ -72,8 +74,18 @@ public class ClientAgendaService {
             throw new RuntimeException("No se puede reprogramar una cita completada");
         }
 
+        // Guardar la fecha anterior antes de sobrescribirla
+        booking.setPreviousScheduledAt(booking.getScheduledAt());
+
+        // Nueva fecha
         booking.setScheduledAt(dto.getScheduledAt());
-        booking.setBookingStatus("PENDIENTE"); // vuelve a pendiente al reprogramar
+
+        // Motivo de reagendación
+        booking.setRescheduleReason(dto.getRescheduleReason());
+
+        // Vuelve a pendiente
+        booking.setBookingStatus("PENDIENTE");
+
         return clientAgendaMapper.toDTO(clientAgendaRepository.save(booking));
     }
 }
