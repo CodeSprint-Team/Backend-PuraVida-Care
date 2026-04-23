@@ -72,6 +72,7 @@ public class SecurityConfig {
                         .requestMatchers("/chat/**").permitAll()
                         .requestMatchers("/conversations/**").permitAll()
 
+
                         .anyRequest().authenticated()
                 )
                 .httpBasic(basic -> basic.disable());
