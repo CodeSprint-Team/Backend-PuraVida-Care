@@ -49,7 +49,7 @@ public class FilteredHomeService {
         Long seniorProfileId = booking.getSeniorProfile().getId();
         String normalizedLayer = normalizeLayer(layer);
 
-        return homeMarkerRepository.findByHome_SeniorProfile_IdAndActiveTrue(seniorProfileId).stream()
+        return homeMarkerRepository.findBySeniorProfileIdAndActiveTrue(seniorProfileId).stream()
                 .map(marker -> toVisibleDto(
                         marker,
                         permission,
@@ -101,7 +101,7 @@ public class FilteredHomeService {
             HomeBookingPermission permission,
             String bookingStatus
     ) {
-        String category = normalizeLayer(marker.getMarkerType());
+        String category = normalizeLayer(marker.getType());
         if (category == null) {
             return Optional.empty();
         }

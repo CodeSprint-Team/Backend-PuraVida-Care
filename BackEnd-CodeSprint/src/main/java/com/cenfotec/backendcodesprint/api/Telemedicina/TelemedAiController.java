@@ -59,11 +59,9 @@ public class TelemedAiController {
         return ResponseEntity.ok(service.checkAiHealth());
     }
 
-    // GET /telemedicina-controll/telemed-sessions/senior/{seniorProfileId}/history
     @GetMapping("/telemed-sessions/senior/{seniorProfileId}/history")
     public ResponseEntity<List<Map<String, Object>>> getTelemedHistory(
             @PathVariable Long seniorProfileId) {
-
         List<Map<String, Object>> history = service.getSessionHistory(seniorProfileId);
         return ResponseEntity.ok(history);
     }

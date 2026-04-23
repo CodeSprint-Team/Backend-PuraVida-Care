@@ -1,9 +1,9 @@
 package com.cenfotec.backendcodesprint.logic.User.Service;
 
+import com.cenfotec.backendcodesprint.logic.FilteredHome.Repository.HomeMarkerRepository;
 import com.cenfotec.backendcodesprint.logic.Model.Home;
 import com.cenfotec.backendcodesprint.logic.Model.HomeMarker;
 import com.cenfotec.backendcodesprint.logic.User.DTO.Home.HomeMarkerDTO;
-import com.cenfotec.backendcodesprint.logic.User.Repository.HomeMarkerRepository;
 import com.cenfotec.backendcodesprint.logic.User.Repository.HomeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
