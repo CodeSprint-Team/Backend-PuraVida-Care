@@ -9,4 +9,6 @@ import java.time.LocalDateTime;
 @Setter
 public class RescheduleRequestDTO {
     private LocalDateTime scheduledAt;
+
+    private String rescheduleReason;
 }
