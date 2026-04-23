@@ -66,7 +66,7 @@ public class ProfileService {
         p.setAge(dto.getAge());
         p.setAddress(dto.getAddress());
         p.setPhone(dto.getPhone());
-        if (dto.getProfileImage() != null) p.setProfileImage(dto.getProfileImage());
+        p.setProfileImage(dto.getProfileImage());
         p.setFamilyMember(dto.getFamilyMember());
         p.setFamilyRelation(dto.getFamilyRelation());
         p.setEmergencyContactName(dto.getEmergencyContactName());
@@ -169,7 +169,7 @@ public class ProfileService {
         updateUserFields(p.getUser(), dto.getUsername(), dto.getLastname(), dto.getEmail());
         p.setPhone(dto.getPhone());
         p.setNotes(dto.getNotes());
-        if (dto.getProfileImage() != null) p.setProfileImage(dto.getProfileImage());
+        p.setProfileImage(dto.getProfileImage());
         p.setRelationToSenior(dto.getRelationToSenior());
         p.setEmergencyContactName(dto.getEmergencyContactName());
         p.setEmergencyContactRelation(dto.getEmergencyContactRelation());
