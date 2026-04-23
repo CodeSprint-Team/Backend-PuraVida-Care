@@ -20,14 +20,12 @@ public class ServiceBooking extends BaseEntity {
     @Column(name = "service_booking_id")
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_profile_id", nullable = false)
-    @NotNull
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_profile_id", nullable = true)
     private ClientProfile clientProfile;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "senior_profile_id", nullable = false)
-    @NotNull
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "senior_profile_id", nullable = true)
     private SeniorProfile seniorProfile;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
@@ -38,6 +36,15 @@ public class ServiceBooking extends BaseEntity {
     @Column(name = "scheduled_at", nullable = false)
     @NotNull
     private LocalDateTime scheduledAt;
+
+    @Column(name = "previous_scheduled_at")
+    private LocalDateTime previousScheduledAt;
+
+    @Column(name = "destination_text", length = 500)
+    private String destinationText;
+
+    @Column(name = "origin_text", length = 500)
+    private String originText;
 
     @Column(name = "destination_latitude", precision = 10, scale = 7)
     private BigDecimal destinationLatitude;
@@ -58,12 +65,17 @@ public class ServiceBooking extends BaseEntity {
 
     @Column(name = "agreed_price_mode", nullable = false, length = 50)
     private String agreedPriceMode;
-  
+
     @Column(name = "booking_status", nullable = false, length = 30)
     private String bookingStatus = "PENDIENTE";
 
-
-    @Column(name = "rejection_reason", columnDefinition = "Text")
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
     private String rejectionReason;
+
+    @Column(name = "cancellation_reason", columnDefinition = "TEXT")
+    private String cancellationReason;
+
+    @Column(name = "reschedule_reason", columnDefinition = "TEXT")
+    private String rescheduleReason;
 
 }

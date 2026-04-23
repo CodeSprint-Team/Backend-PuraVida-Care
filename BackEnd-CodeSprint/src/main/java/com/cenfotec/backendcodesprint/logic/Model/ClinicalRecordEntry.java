@@ -1,4 +1,5 @@
 package com.cenfotec.backendcodesprint.logic.Model;
+import com.cenfotec.backendcodesprint.logic.ClinicalRecord.Enums.EntryType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,9 +21,10 @@ public class ClinicalRecordEntry extends BaseEntity {
     @NotNull
     private ClinicalRecord clinicalRecord;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "entry_type", nullable = false, length = 30)
-    @NotBlank
-    private String entryType;
+    @NotNull
+    private EntryType entryType;
 
     @Column(name = "content", nullable = false, columnDefinition = "Text")
     @NotBlank

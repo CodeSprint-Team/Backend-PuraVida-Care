@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter @Setter
 @Entity
 @Table(name = "clinical_record")
@@ -20,7 +22,8 @@ public class ClinicalRecord extends BaseEntity {
     @NotNull
     private SeniorProfile seniorProfile;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ai_clinical_analysis_id")
-    private AiClinicalAnalysis aiClinicalAnalysis;
+    @OneToMany(mappedBy = "clinicalRecord", fetch = FetchType.LAZY)
+    private List<AiClinicalAnalysis> aiClinicalAnalyses;
+
+
 }

@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+
+import static org.hibernate.type.SqlTypes.JSON;
 
 @Getter
 @Setter
@@ -28,6 +31,10 @@ public class AiClinicalAnalysis extends BaseEntity {
     @NotNull
     private ProviderProfile providerProfile;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "clinical_record_id")
+    private ClinicalRecord clinicalRecord;
+
     @Column(name = "clinical_text", nullable = false, columnDefinition = "Text")
     @NotBlank
     private String clinicalText;
@@ -36,6 +43,7 @@ public class AiClinicalAnalysis extends BaseEntity {
     @NotBlank
     private String analysisResult;
 
-    @Column(name = "payload_without_pii", columnDefinition = "JSON")
+    @Column(name = "payload_without_pii", columnDefinition = "json")
+    @JdbcTypeCode(JSON)
     private String payloadWithoutPii;
 }

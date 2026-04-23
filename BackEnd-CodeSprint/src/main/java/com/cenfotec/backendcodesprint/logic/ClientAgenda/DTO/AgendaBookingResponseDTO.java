@@ -21,6 +21,9 @@ public class AgendaBookingResponseDTO {
     private BigDecimal      destinationLatitude;
     private BigDecimal      destinationLongitude;
     private String          rejectionReason;
+    private LocalDateTime previousScheduledAt;
+    private String rescheduleReason;
+    private String          cancellationReason;
     private LocalDateTime   createdAt;
 
     // ── Servicio

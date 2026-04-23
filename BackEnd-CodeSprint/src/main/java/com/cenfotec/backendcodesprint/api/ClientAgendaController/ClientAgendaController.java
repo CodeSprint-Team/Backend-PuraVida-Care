@@ -3,6 +3,7 @@ package com.cenfotec.backendcodesprint.api.ClientAgendaController;
 import com.cenfotec.backendcodesprint.logic.ClientAgenda.DTO.AgendaBookingResponseDTO;
 import com.cenfotec.backendcodesprint.logic.ClientAgenda.DTO.RescheduleRequestDTO;
 import com.cenfotec.backendcodesprint.logic.ClientAgenda.Service.ClientAgendaService;
+import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Request.CancelBookingRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,12 +33,16 @@ public class ClientAgendaController {
         return ResponseEntity.ok(clientAgendaService.getBookingDetail(bookingId, clientProfileId));
     }
 
-//Cancelar una cita
+    //Cancelar una cita
     @PutMapping("/{clientProfileId}/cancel/{bookingId}")
     public ResponseEntity<AgendaBookingResponseDTO> cancel(
             @PathVariable Long clientProfileId,
-            @PathVariable Long bookingId) {
-        return ResponseEntity.ok(clientAgendaService.cancelBooking(bookingId, clientProfileId));
+            @PathVariable Long bookingId,
+            @RequestBody CancelBookingRequestDto dto
+    ) {
+        return ResponseEntity.ok(
+                clientAgendaService.cancelBooking(bookingId, clientProfileId, dto)
+        );
     }
 
 //Reprogramar
