@@ -4,7 +4,6 @@ import com.cenfotec.backendcodesprint.logic.Model.ServiceBooking;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Response.ServiceBookingResponseDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring")
 public interface ServiceBookingMapper {
@@ -19,5 +18,7 @@ public interface ServiceBookingMapper {
     @Mapping(target = "providerProfileId",    source = "careService.providerProfile.id")
     @Mapping(target = "providerName",         expression = "java(entity.getCareService().getProviderProfile().getUser().getUserName() + \" \" + entity.getCareService().getProviderProfile().getUser().getLastName())")
     @Mapping(target = "providerProfileImage", source = "careService.providerProfile.profileImage")
+    @Mapping(target = "appointmentType",      source = "appointmentType")
+    @Mapping(target = "telemedSessionId",     expression = "java(entity.getTelemedSession() != null ? entity.getTelemedSession().getId() : null)")
     ServiceBookingResponseDto toResponse(ServiceBooking entity);
 }

@@ -35,4 +35,7 @@ public class ServiceBookingResponseDto {
     private BigDecimal originLongitude;
     private BigDecimal destinationLatitude;
     private BigDecimal destinationLongitude;
+
+    private String appointmentType;
+    private Long   telemedSessionId;
 }

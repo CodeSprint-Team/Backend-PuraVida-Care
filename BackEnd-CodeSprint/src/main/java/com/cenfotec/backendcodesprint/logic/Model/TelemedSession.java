@@ -29,14 +29,13 @@ public class TelemedSession extends BaseEntity {
     @NotNull
     private ProviderProfile providerProfile;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_profile_id", nullable = false)
-    @NotNull
+    // ── Opcionales: el booking puede ser de cliente O adulto mayor ──
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_profile_id", nullable = true)
     private ClientProfile clientProfile;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "senior_profile_id", nullable = false)
-    @NotNull
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "senior_profile_id", nullable = true)
     private SeniorProfile seniorProfile;
 
     @Column(name = "session_state", nullable = false, length = 20)
@@ -61,4 +60,3 @@ public class TelemedSession extends BaseEntity {
     @Column(name = "ai_status", length = 20)
     private AiStatus aiStatus = AiStatus.NOT_CONSENTED;
 }
-
