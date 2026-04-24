@@ -1,42 +1,47 @@
 package com.cenfotec.backendcodesprint.logic.Model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "home_marker")
+@Table(name = "hogar_marcador")
 public class HomeMarker extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "home_marker_id")
+    @Column(name = "hogar_marcador_id")
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "home_id", nullable = false)
-    @NotNull
-    private Home home;
+    @Column(name = "hogar_id", nullable = false)
+    private Long homeId;
 
-    @Column(name = "room_name", nullable = false, length = 100)
-    @NotBlank
-    private String roomName;
+    @Column(name = "habitacion", length = 50, nullable = false)
+    private String room;
 
-    @Column(name = "marker_type", nullable = false, length = 50)
-    @NotBlank
-    private String markerType;
+    @Column(name = "tipo", length = 30, nullable = false)
+    private String type; // security, medical, nursing, pharmacy, reception, transport
 
-    @Column(name = "title", nullable = false, length = 100)
-    @NotBlank
+    @Column(name = "titulo", length = 100, nullable = false)
     private String title;
 
-    @Column(name = "marker_description", columnDefinition = "Text")
-    private String markerDescription;
+    @Column(name = "descripcion_hogar_mar", columnDefinition = "text")
+    private String description;
 
-    @Column(name = "active", nullable = false)
-    private Boolean active = true;
+    @Column(name = "contacto", length = 50)
+    private String contact;
+
+    @Column(name = "estado", length = 20)
+    private String status = "active";
+
+    @Column(name = "posicion_x", nullable = false)
+    private Integer positionX;
+
+    @Column(name = "posicion_y", nullable = false)
+    private Integer positionY;
+
+    @Column(name = "icono", length = 10)
+    private String icon;
 }

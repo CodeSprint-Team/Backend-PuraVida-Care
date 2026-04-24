@@ -22,6 +22,9 @@ public class ClientAgendaMapper {
         dto.setDestinationLongitude(b.getDestinationLongitude());
         dto.setRejectionReason(b.getRejectionReason());
         dto.setCreatedAt(b.getCreated());
+        dto.setPreviousScheduledAt(b.getPreviousScheduledAt());
+        dto.setRescheduleReason(b.getRescheduleReason());
+        dto.setCancellationReason(b.getCancellationReason());
 
         // ── Servicio
         dto.setServiceTitle(b.getCareService().getTitle());
@@ -39,9 +42,19 @@ public class ClientAgendaMapper {
 
         // ── Adulto mayor
         var sp = b.getSeniorProfile();
-        dto.setSeniorProfileId(sp.getId());
-        dto.setSeniorFullName(sp.getUser().getUserName() + " " + sp.getUser().getLastName());
-        dto.setSeniorAddress(sp.getAddress());
+        if (sp != null) {
+            dto.setSeniorProfileId(sp.getId());
+            dto.setSeniorFullName(
+                    sp.getUser() != null
+                            ? sp.getUser().getUserName() + " " + sp.getUser().getLastName()
+                            : "No asignado"
+            );
+            dto.setSeniorAddress(sp.getAddress() != null ? sp.getAddress() : "Sin dirección");
+        } else {
+            dto.setSeniorProfileId(null);
+            dto.setSeniorFullName("No asignado");
+            dto.setSeniorAddress("Sin dirección");
+        }
 
         // ── Cliente
         var cp = b.getClientProfile();

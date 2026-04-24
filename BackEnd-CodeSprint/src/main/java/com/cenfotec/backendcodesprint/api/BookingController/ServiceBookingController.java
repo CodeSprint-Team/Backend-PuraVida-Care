@@ -3,11 +3,14 @@ package com.cenfotec.backendcodesprint.api.BookingController;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Request.BookingActionRequestDto;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Response.BookingActionResponseDto;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Response.ServiceBookingResponseDto;
+import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Request.CreateServiceBookingRequestDto;
 import com.cenfotec.backendcodesprint.logic.ServiceBooking.Service.ServiceBookingService;
+import com.cenfotec.backendcodesprint.logic.ServiceBooking.Dto.Request.CancelBookingRequestDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -17,6 +20,12 @@ import java.util.List;
 public class ServiceBookingController {
 
     private final ServiceBookingService service;
+
+    @PostMapping
+    public ResponseEntity<ServiceBookingResponseDto> createBooking(
+            @Valid @RequestBody CreateServiceBookingRequestDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.createBooking(dto));
+    }
 
     @GetMapping("/provider/{providerProfileId}")
     public ResponseEntity<List<ServiceBookingResponseDto>> findByProvider(
@@ -57,5 +66,13 @@ public class ServiceBookingController {
             @PathVariable Long bookingId,
             @RequestParam Long providerProfileId) {
         return ResponseEntity.ok(service.startService(bookingId, providerProfileId));
+    }
+
+    @PatchMapping("/{bookingId}/cancel")
+    public ResponseEntity<BookingActionResponseDto> cancel(
+            @PathVariable Long bookingId,
+            @RequestParam Long providerProfileId,
+            @Valid @RequestBody CancelBookingRequestDto dto) {
+        return ResponseEntity.ok(service.cancelBooking(bookingId, providerProfileId, dto));
     }
 }

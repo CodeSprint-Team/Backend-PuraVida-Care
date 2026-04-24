@@ -35,6 +35,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH,  "/profiles/**").permitAll()
                         .requestMatchers("/verifications/**").permitAll()
                         .requestMatchers("/profiles/**").permitAll()
+
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/admin/**").permitAll()
+                        .requestMatchers("/users/**").permitAll()
+                        .requestMatchers("/services/**").permitAll()
+
                         .requestMatchers("/bookings/**").permitAll()
                         .requestMatchers("/tracking/**").permitAll()
 
@@ -48,6 +54,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/support-products/**").permitAll()
                         .requestMatchers("/reviews/**").permitAll()
+                        .requestMatchers("/services/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET,    "/booking/**").permitAll()
                         .requestMatchers(HttpMethod.POST,   "/booking/**").permitAll()
@@ -58,12 +65,17 @@ public class SecurityConfig {
                         .requestMatchers("/search/**").permitAll()
                         .requestMatchers("/support-product-catalogs/**").permitAll()
                         .requestMatchers("/service-categories/**").permitAll()
+                        .requestMatchers("/paypal/**").permitAll()
+                        .requestMatchers("/telemedicina-controll/**").permitAll()
+                        .requestMatchers("/ai/**").permitAll()
+                        .requestMatchers("/filtered-home/**").permitAll()
+                        .requestMatchers("/chat/**").permitAll()
+                        .requestMatchers("/conversations/**").permitAll()
 
 
                         .anyRequest().authenticated()
                 )
                 .httpBasic(basic -> basic.disable());
-
         return http.build();
     }
 }

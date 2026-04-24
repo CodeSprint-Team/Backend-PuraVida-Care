@@ -34,8 +34,9 @@ public class ArticleOffer extends BaseEntity {
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal amount;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "offer_state", nullable = false, length = 20)
-    private String offerState = "pending";
+    private OfferStatus offerState = OfferStatus.PENDING;
 
     @Column(name = "message", columnDefinition = "Text")
     private String message;
