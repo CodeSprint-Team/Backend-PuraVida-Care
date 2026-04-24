@@ -17,7 +17,6 @@ public class CreateServiceBookingRequestDto {
     private Long userId;
 
     private Long clientProfileId;
-
     private Long seniorProfileId;
 
     @NotNull(message = "El careServiceId es obligatorio.")
@@ -27,15 +26,10 @@ public class CreateServiceBookingRequestDto {
     private LocalDateTime scheduledAt;
 
     private BigDecimal destinationLatitude;
-
     private BigDecimal destinationLongitude;
-
     private BigDecimal originLatitude;
-
     private BigDecimal originLongitude;
-
     private String originText;
-
     private String destinationText;
 
     @NotNull(message = "El precio acordado es obligatorio.")
@@ -44,4 +38,6 @@ public class CreateServiceBookingRequestDto {
 
     @NotBlank(message = "El modo de precio acordado es obligatorio.")
     private String agreedPriceMode;
+
+    private String appointmentType;
 }

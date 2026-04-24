@@ -141,8 +141,22 @@ public class TelemedAiService {
         log.info("[endSession] Iniciando cierre de sesión {}", sessionId);
 
         // ─── 1. Buscar la sesión ───
-        TelemedSession session = repository.findById(Long.parseLong(sessionId))
-                .orElseThrow(() -> new RuntimeException("No se encontró la sesión " + sessionId));
+        TelemedSession session;
+        try {
+            session = repository.findById(Long.parseLong(sessionId))
+                    .orElseThrow(() -> new RuntimeException("No se encontró la sesión " + sessionId));
+        } catch (Exception e) {
+            log.error("[endSession] No se encontró la sesión {}: {}", sessionId, e.getMessage());
+            // Si no existe la sesión, retornar respuesta vacía en lugar de explotar
+            return mapper.toEndSessionResponse(sessionId, false, null, AiStatus.UNAVAILABLE);
+        }
+
+        // ─── Verificar si ya fue cerrada ───
+        if ("completed".equals(session.getSessionState())) {
+            log.warn("[endSession] Sesión {} ya estaba cerrada — retornando respuesta existente", sessionId);
+            activeSessions.remove(sessionId);
+            return mapper.toEndSessionResponse(sessionId, false, null, AiStatus.COMPLETED);
+        }
 
         SessionAiState state = activeSessions.get(sessionId);
         String transcriptText = state != null ? state.getTranscript() : "";
@@ -151,21 +165,32 @@ public class TelemedAiService {
                 transcriptText.length(), session.getAiConsent());
 
         // ─── 2. Buscar o crear expediente del senior ───
-        ClinicalRecord clinicalRecord = clinicalRecordService.findOrCreateRecord(
-                session.getSeniorProfile()
-        );
-
-        log.info("[endSession] ClinicalRecord obtenido, id = {}", clinicalRecord.getId());
+        ClinicalRecord clinicalRecord = null;
+        try {
+            // Usar seniorProfile si existe, si no usar clientProfile
+            if (session.getSeniorProfile() != null) {
+                clinicalRecord = clinicalRecordService.findOrCreateRecord(session.getSeniorProfile());
+            } else {
+                log.warn("[endSession] Sesión {} sin seniorProfile — omitiendo expediente clínico", sessionId);
+            }
+        } catch (Exception e) {
+            log.error("[endSession] Error obteniendo ClinicalRecord: {}", e.getMessage(), e);
+        }
 
         // ─── 3. Guardar transcripción (SIEMPRE, aunque la IA falle) ───
-        if (!transcriptText.isBlank()) {
-            clinicalRecordService.addEntry(
-                    clinicalRecord,
-                    EntryType.TRANSCRIPTION,
-                    transcriptText,
-                    session.getProviderProfile().getUser()
-            );
-            log.info("[endSession] Entry TRANSCRIPTION guardada");
+        if (clinicalRecord != null && !transcriptText.isBlank()) {
+            try {
+                clinicalRecordService.addEntry(
+                        clinicalRecord,
+                        EntryType.TRANSCRIPTION,
+                        transcriptText,
+                        session.getProviderProfile().getUser()
+                );
+                log.info("[endSession] Entry TRANSCRIPTION guardada");
+            } catch (Exception e) {
+                log.error("[endSession] Error guardando transcripción: {}", e.getMessage(), e);
+                // No es crítico, continuar
+            }
         }
 
         // ─── 4. Intentar análisis IA ───
@@ -174,7 +199,7 @@ public class TelemedAiService {
 
         if (!session.getAiConsent()) {
             finalStatus = AiStatus.NOT_CONSENTED;
-            log.info("[endSession] Status final: NOT_CONSENTED (sin consentimiento)");
+            log.info("[endSession] Status final: NOT_CONSENTED");
         } else if (transcriptText.isBlank()) {
             finalStatus = AiStatus.PARTIAL;
             log.info("[endSession] Status final: PARTIAL (sin transcripción)");
@@ -184,36 +209,42 @@ public class TelemedAiService {
                 aiRecord = mcpClient.generateMedicalRecord(
                         transcriptText, sessionId, providerName, durationMinutes
                 );
-                log.info("[endSession] ✅ IA respondió OK, aiRecord keys = {}",
+                log.info("[endSession] IA respondió OK, aiRecord keys = {}",
                         aiRecord != null ? aiRecord.keySet() : "null");
 
-                String payloadJson = objectMapper.writeValueAsString(aiRecord);
-                log.info("[endSession] JSON serializado, length = {}", payloadJson.length());
+                if (aiRecord != null && clinicalRecord != null) {
+                    String payloadJson = objectMapper.writeValueAsString(aiRecord);
+                    log.info("[endSession] JSON serializado, length = {}", payloadJson.length());
 
-                var saved = clinicalRecordService.saveAiAnalysis(
-                        clinicalRecord,
-                        session,
-                        session.getProviderProfile(),
-                        transcriptText,
-                        "completed",
-                        payloadJson
-                );
-                log.info("[endSession] ✅ saveAiAnalysis OK, id generado = {}",
-                        saved != null ? saved.getId() : "null");
+                    var saved = clinicalRecordService.saveAiAnalysis(
+                            clinicalRecord,
+                            session,
+                            session.getProviderProfile(),
+                            transcriptText,
+                            "completed",
+                            payloadJson
+                    );
+                    log.info("[endSession] saveAiAnalysis OK, id = {}",
+                            saved != null ? saved.getId() : "null");
+                }
 
                 finalStatus = AiStatus.COMPLETED;
             } catch (Exception e) {
-                log.error("[endSession] ❌ Error en el bloque IA: {}", e.getMessage(), e);
+                log.error("[endSession] Error en bloque IA: {}", e.getMessage(), e);
                 finalStatus = AiStatus.UNAVAILABLE;
             }
         }
 
         // ─── 5. Cerrar sesión ───
-        session.setSessionState("completed");
-        session.setEndedAt(OffsetDateTime.now());
-        session.setAiStatus(finalStatus);
-        repository.save(session);
-        log.info("[endSession] Sesión {} cerrada con status {}", sessionId, finalStatus);
+        try {
+            session.setSessionState("completed");
+            session.setEndedAt(OffsetDateTime.now());
+            session.setAiStatus(finalStatus);
+            repository.save(session);
+            log.info("[endSession] Sesión {} cerrada con status {}", sessionId, finalStatus);
+        } catch (Exception e) {
+            log.error("[endSession] Error guardando estado final de sesión: {}", e.getMessage(), e);
+        }
 
         activeSessions.remove(sessionId);
 

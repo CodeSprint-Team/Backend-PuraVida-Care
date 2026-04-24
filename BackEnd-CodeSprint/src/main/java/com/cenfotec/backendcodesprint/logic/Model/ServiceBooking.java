@@ -78,4 +78,17 @@ public class ServiceBooking extends BaseEntity {
     @Column(name = "reschedule_reason", columnDefinition = "TEXT")
     private String rescheduleReason;
 
+    @Column(name = "appointment_type", length = 30)
+    private String appointmentType;
+
+    @Transient
+    private TelemedSession telemedSession;
+
+    public TelemedSession getTelemedSession() {
+        return telemedSession;
+    }
+
+    public void setTelemedSession(TelemedSession telemedSession) {
+        this.telemedSession = telemedSession;
+    }
 }
