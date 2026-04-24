@@ -1,32 +1,29 @@
 package com.cenfotec.backendcodesprint.logic.Model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "home_map")
+@Table(name = "hogar_mapa")
 public class HomeMap extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "home_map_id")
+    @Column(name = "hogar_mapa_id")
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "home_id", nullable = false)
-    @NotNull
-    private Home home;
+    @Column(name = "hogar_id", nullable = false)
+    private Long homeId;
 
-    @Column(name = "room_name", nullable = false, length = 100)
-    @NotBlank
-    private String roomName;
+    @Column(name = "habitacion", length = 50, nullable = false)
+    private String room;
 
-    @Column(name = "file_url", nullable = false, columnDefinition = "Text")
-    @NotBlank
-    private String fileUrl;
+    @Column(name = "tipo", length = 50)
+    private String type;
+
+    @Column(name = "url", columnDefinition = "text")
+    private String url;
 }

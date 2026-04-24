@@ -1,5 +1,6 @@
 package com.cenfotec.backendcodesprint.logic.Model;
 
+import com.cenfotec.backendcodesprint.logic.Telemedicina.Enums.AiStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -28,14 +29,13 @@ public class TelemedSession extends BaseEntity {
     @NotNull
     private ProviderProfile providerProfile;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_profile_id", nullable = false)
-    @NotNull
+    // ── Opcionales: el booking puede ser de cliente O adulto mayor ──
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_profile_id", nullable = true)
     private ClientProfile clientProfile;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "senior_profile_id", nullable = false)
-    @NotNull
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "senior_profile_id", nullable = true)
     private SeniorProfile seniorProfile;
 
     @Column(name = "session_state", nullable = false, length = 20)
@@ -46,5 +46,17 @@ public class TelemedSession extends BaseEntity {
 
     @Column(name = "ended_at")
     private OffsetDateTime endedAt;
-}
 
+    @Column(name = "ai_consent", nullable = false)
+    private Boolean aiConsent = false;
+
+    @Column(name = "ai_consent_at")
+    private OffsetDateTime aiConsentAt;
+
+    @Column(name = "ai_consent_ip", length = 45)
+    private String aiConsentIp;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ai_status", length = 20)
+    private AiStatus aiStatus = AiStatus.NOT_CONSENTED;
+}

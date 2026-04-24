@@ -7,6 +7,7 @@ import lombok.Setter;
 public class ClientProfileResponseDTO {
 
     private Long id;
+    private Long seniorProfileId;
 
     private String fullName;
     private String email;
